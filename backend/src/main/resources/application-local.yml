@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/nova}
+    username: ${DB_USERNAME:nova}
+    password: ${DB_PASSWORD:nova}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: false
