@@ -127,6 +127,29 @@
     background: transparent;
   }
 
+  /* Thin, theme-aware scrollbar confined to an element (e.g. a scrollable
+   * legend) so it reads as a subtle accent rather than the default 10px bar. */
+  .nova-scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--muted) / 0.4) transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nova-scroll-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .nova-scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .nova-scroll-thin::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--muted) / 0.4);
+    border: 0;
+    border-radius: 9999px;
+  }
+  .nova-scroll-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--muted) / 0.7);
+  }
+
   :focus-visible {
     @apply outline-none ring-2 ring-primary/70 ring-offset-2 ring-offset-background;
   }

@@ -139,7 +139,7 @@ export function Transactions() {
       </div>
 
       <Card>
-        <CardContent className="flex flex-col gap-3">
+        <CardContent className="flex flex-col gap-3 pt-5">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Select
               label="Type"

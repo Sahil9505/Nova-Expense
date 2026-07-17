@@ -271,7 +271,7 @@ export function Dashboard() {
                   <span className="text-sm font-bold tabular-nums">{formatCurrency(totalSpending)}</span>
                 </div>
               </div>
-              <ul className="flex flex-1 flex-col gap-2">
+              <ul className="nova-scroll-thin flex min-h-0 max-h-full flex-1 flex-col gap-2 overflow-y-auto pr-1">
                 {categoryData.map((entry) => (
                   <li key={entry.category} className="flex items-center gap-2 text-sm">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
