@@ -144,14 +144,17 @@ export const api = {
 
 import type {
   Account,
+  Budget,
   Category,
   CreateAccountPayload,
+  CreateBudgetPayload,
   CreateCategoryPayload,
   CreateTransactionPayload,
   DashboardSummary,
   Transaction,
   TransactionQuery,
   UpdateAccountPayload,
+  UpdateBudgetPayload,
   UpdateCategoryPayload,
   UpdateTransactionPayload,
 } from '@/types';
@@ -195,4 +198,18 @@ export const transactionsApi = {
 
 export const dashboardApi = {
   summary: () => api.get<DashboardSummary>('/api/dashboard/summary'),
+};
+
+export const budgetsApi = {
+  list: (active?: boolean) => {
+    const params = new URLSearchParams();
+    if (active !== undefined) params.set('active', String(active));
+    const qs = params.toString();
+    return api.get<Budget[]>(`/api/budgets${qs ? `?${qs}` : ''}`);
+  },
+  get: (id: string) => api.get<Budget>(`/api/budgets/${id}`),
+  create: (payload: CreateBudgetPayload) => api.post<Budget>('/api/budgets', payload),
+  update: (id: string, payload: UpdateBudgetPayload) =>
+    api.patch<Budget>(`/api/budgets/${id}`, payload),
+  remove: (id: string) => api.delete<void>(`/api/budgets/${id}`),
 };

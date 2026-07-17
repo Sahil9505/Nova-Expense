@@ -2,6 +2,7 @@ package com.nova.finance;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nova.finance.budget.BudgetRepository;
 import com.nova.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,9 +37,17 @@ public abstract class AbstractFinanceApiTest {
     @Autowired
     protected UserRepository userRepository;
 
+    @Autowired
+    protected BudgetRepository budgetRepository;
+
     @BeforeEach
-    void noOp() {
-        // Placeholder so IDEs keep the base wired; each test uses unique emails.
+    void cleanBudgets() {
+        // The in-memory test database is shared across test methods (ddl-auto=create-drop
+        // only drops at the end of the run) and register/create commit their own
+        // transactions. Budgets are user-scoped, so clearing them keeps Budget tests
+        // isolated without affecting other finance suites.
+        budgetRepository.deleteAll();
+        budgetRepository.flush();
     }
 
     protected String email() {
@@ -106,6 +115,16 @@ public abstract class AbstractFinanceApiTest {
 
     protected String createTransaction(String token, Map<String, Object> body) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/transactions")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(body)))
+                .andExpect(status().isOk())
+                .andReturn();
+        return parse(result).get("id").asText();
+    }
+
+    protected String createBudget(String token, Map<String, Object> body) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/budgets")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(body)))

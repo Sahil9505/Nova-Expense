@@ -1,5 +1,6 @@
 package com.nova.finance.budget;
 
+import com.nova.common.BaseEntity;
 import com.nova.finance.category.Category;
 import com.nova.user.User;
 import jakarta.persistence.Column;
@@ -21,15 +22,22 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+/**
+ * A spending limit a user sets for themselves. A budget may be scoped to a single
+ * {@link Category} or, when {@code category} is null, apply to the user's overall
+ * spending. Budgets are never deleted outright — deactivation ({@code isActive=false})
+ * preserves history while hiding the budget from active views.
+ */
 @Entity
 @Table(name = "budgets")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Budget extends com.nova.common.BaseEntity {
+public class Budget extends BaseEntity {
 
+    /** How often a budget's limit resets. {@code CUSTOM} spans an explicit date range. */
     public enum Period {
-        DAILY, WEEKLY, MONTHLY, QUARTERLY, YEARLY
+        WEEKLY, MONTHLY, YEARLY, CUSTOM
     }
 
     @Id
@@ -47,6 +55,9 @@ public class Budget extends com.nova.common.BaseEntity {
     @Column(nullable = false)
     private String name;
 
+    @Column(length = 255)
+    private String description;
+
     @Column(nullable = false, precision = 18, scale = 4)
     private BigDecimal amount;
 
@@ -54,9 +65,21 @@ public class Budget extends com.nova.common.BaseEntity {
     @Column(nullable = false)
     private Period period;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean active;
+
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
     @Column(name = "end_date")
     private LocalDate endDate;
+
+    public Budget(User user, String name, BigDecimal amount, Period period, LocalDate startDate) {
+        this.user = user;
+        this.name = name;
+        this.amount = amount;
+        this.period = period;
+        this.startDate = startDate;
+        this.active = true;
+    }
 }
