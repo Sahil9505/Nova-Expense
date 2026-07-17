@@ -57,4 +57,23 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
 
     /** Used to guard category deletion: a category still attached to transactions cannot be removed. */
     long countByCategoryId(UUID categoryId);
+
+    /**
+     * Raw expense rows within a window, for in-memory budget aggregation. Returns
+     * rows of { categoryId, amount, occurredAt } so the caller can bucket a single
+     * load across many budgets (each with its own sub-window and category scope) without
+     * issuing a query per budget. Only {@code EXPENSE} rows are returned — income is
+     * never counted as spending.
+     */
+    @Query("""
+            SELECT t.category.id, t.amount, t.occurredAt
+            FROM Transaction t
+            WHERE t.user.id = :userId
+              AND t.type = com.nova.finance.transaction.Transaction.Type.EXPENSE
+              AND t.occurredAt >= :start
+              AND t.occurredAt < :end
+            """)
+    List<Object[]> findExpenseRows(@Param("userId") UUID userId,
+                                    @Param("start") OffsetDateTime start,
+                                    @Param("end") OffsetDateTime end);
 }

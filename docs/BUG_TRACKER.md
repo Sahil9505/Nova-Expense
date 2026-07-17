@@ -43,3 +43,29 @@ None known.
 - **Fix:** The shared finance test harness now clears budgets in `@BeforeEach`,
   isolating budget tests without touching other suites.
 - **Resolved in:** v0.4.0
+
+### B-4B-1 — `LazyInitializationException` resolving currency for budget summary
+- **Severity:** High (blocked the new `GET /api/budgets/summary` endpoint)
+- **Symptom:** The summary endpoint returned `500` because the controller read
+  `user.getPreferredCurrency()` from a `User` proxy obtained via
+  `userRepository.getReferenceById(...)` *after* the service's read-only
+  transaction had closed.
+- **Root cause:** `getReferenceById` returns an uninitialized lazy proxy; the
+  currency field was touched outside the persistence context.
+- **Fix:** The currency is now projected inside the service transaction via
+  `UserRepository.findPreferredCurrencyById(...)` (a targeted `@Query`), and the
+  controller passes a placeholder default to the service. No lazy access escapes the
+  transaction.
+- **Resolved in:** v0.5.0
+
+### B-4B-2 — Test harness collided with seeded categories
+- **Severity:** Low (test-only)
+- **Symptom:** `BudgetIntelligenceApiTest` got `409 CONFLICT` when the
+  `createCategory` helper posted a duplicate of a category seeded on registration
+  (e.g. "Food").
+- **Root cause:** The helper assumed a unique name and always `POST`ed, ignoring
+  the seeded system/user categories already present.
+- **Fix:** `AbstractFinanceApiTest.createCategory` is now idempotent — it returns an
+  existing same-name (case-insensitive, same type) category before attempting a
+  create. No production code changed.
+- **Resolved in:** v0.5.0

@@ -145,6 +145,8 @@ export const api = {
 import type {
   Account,
   Budget,
+  BudgetSummary,
+  BudgetWithMetrics,
   Category,
   CreateAccountPayload,
   CreateBudgetPayload,
@@ -212,4 +214,6 @@ export const budgetsApi = {
   update: (id: string, payload: UpdateBudgetPayload) =>
     api.patch<Budget>(`/api/budgets/${id}`, payload),
   remove: (id: string) => api.delete<void>(`/api/budgets/${id}`),
+  summary: () => api.get<BudgetSummary>('/api/budgets/summary'),
+  metrics: (id: string) => api.get<BudgetWithMetrics>(`/api/budgets/${id}/metrics`),
 };

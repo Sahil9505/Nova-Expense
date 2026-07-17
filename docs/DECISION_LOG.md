@@ -125,3 +125,102 @@ rationale.
 - **Frontend parity.** The Budgets page and `BudgetFormDialog` reuse the existing
   `Dialog`, `Select`, `TextField`, `Button`, `Card`, `Badge`, `EmptyState`,
   `ConfirmDialog`, skeleton loaders, and toast system — no new design primitives.
+
+---
+
+## D-4B-1 — Budget intelligence is a centralized, reusable engine
+
+- **Date:** 2026-07-17
+- **Decision:** All budget math lives in `com.nova.finance.budget`
+  (`BudgetCalculator`, `BudgetPeriods`, `BudgetCalculation`, `BudgetStatus`,
+  `BudgetCalculationService`) — separate from controllers, services, and UI.
+- **Reason:** The spec requires the same calculations to be reusable by future
+  Analytics, Financial Goals, and AI modules. Scattering math across the
+  `BudgetController` or the React cards would force every future module to
+  re-derive it (and likely diverge).
+- **Alternatives considered:**
+  1. Compute spent/remaining/status inside `BudgetController` per request.
+  2. Compute them in the frontend from raw transactions.
+- **Why alternatives were rejected:** (1) duplicates logic with the dashboard and
+  blocks reuse; (2) pushes business rules and DB aggregation to the client,
+  breaks offline-correctness, and cannot enforce the single-query performance
+  rule. The engine is the single source of truth and is pure/testable.
+- **Impact:** Frontend and future modules consume `BudgetCalculation`/`BudgetMetrics`
+  directly; the engine has no web or persistence dependency.
+
+---
+
+## D-4B-2 — Recurring budgets measure the *current* calendar window
+
+- **Date:** 2026-07-17
+- **Decision:** `WEEKLY`/`MONTHLY`/`YEARLY` budgets are evaluated against the
+  calendar period containing "today" (week starts Monday, ISO-8601); only `CUSTOM`
+  budgets use their own explicit `[startDate, endDate]` range.
+- **Reason:** A "July groceries" budget created in January should still report July's
+  spend on the live dashboard, not a stale January window. Recurring limits are
+  inherently about the current period.
+- **Alternatives considered:**
+  1. Anchor every recurring budget to its `startDate` anniversary.
+  2. Treat recurring budgets as infinite (sum all history).
+- **Why alternatives were rejected:** (1) surprises users (a budget "expires" until its
+  anniversary) and complicates the UI; (2) defeats the purpose of a period limit.
+- **Impact:** `BudgetPeriods.resolve(budget, referenceDate)` is the single window
+  resolver; tests pin it for all four periods and boundary inclusion.
+
+---
+
+## D-4B-3 — One query for the whole summary (no N+1)
+
+- **Date:** 2026-07-17
+- **Decision:** `BudgetCalculationService.summary` loads expense rows for the *union*
+  of all budgets' windows in a single `TransactionRepository.findExpenseRows` call,
+  then buckets them in memory per budget (category-scoped vs. overall).
+- **Reason:** A budget per budget would issue one query each (classic N+1) as the
+  spec explicitly forbids. A single in-memory pass mirrors the dashboard's existing
+  aggregation style.
+- **Alternatives considered:**
+  1. One `SUM` query per budget.
+  2. A native SQL window/union query returning all budgets at once.
+- **Why alternatives were rejected:** (1) N+1 at scale; (2) a large, hard-to-test
+  SQL that still needs in-memory pairing with entities. The single-load + in-memory
+  bucket is simple, testable, and adds zero round-trips.
+- **Impact:** Cost is one expense query regardless of budget count; values are computed
+  once per request.
+
+---
+
+## D-4B-4 — Intelligence is additive; the existing Budget API is untouched
+
+- **Date:** 2026-07-17
+- **Decision:** New endpoints (`/api/budgets/summary`,
+  `/api/budgets/{id}/metrics`) and new DTOs (`BudgetMetrics`,
+  `BudgetMetricsResponse`, `BudgetSummaryResponse`) are added; the existing
+  `BudgetResponse` and CRUD endpoints are not modified.
+- **Reason:** Rule 6 (preserve backward compatibility) and the Architecture Bible's
+  "one envelope" convention. Extending rather than changing keeps every prior
+  client working.
+- **Alternatives considered:**
+  1. Embed metrics inside `BudgetResponse`.
+  2. Version the budget API (`/api/v2/budgets`).
+- **Why alternatives were rejected:** (1) changes a stable DTO and bloats every
+  list payload; (2) premature for an additive feature.
+- **Impact:** Frontend fetches `/summary` once for both the Budgets strip and the
+  Dashboard widgets; the bare list remains available for forms/lookups.
+
+---
+
+## D-4B-5 — Configurable, defaulted health thresholds
+
+- **Date:** 2026-07-17
+- **Decision:** `HEALTHY` < 80%, `WARNING` 80–99%, `EXCEEDED` ≥ 100%
+  via `BudgetProperties` (`nova.budget.warning-threshold` / `exceeded-threshold`,
+  as fractions). Sensible defaults apply if unconfigured.
+- **Reason:** The spec asks for tunable boundaries; a config bean lets ops adjust
+  without a code change, and defaults keep the module zero-config.
+- **Alternatives considered:**
+  1. Hard-coded constants in `BudgetCalculator`.
+  2. Per-budget threshold fields on the entity.
+- **Why alternatives were rejected:** (1) not tunable; (2) user-facing complexity the
+  spec does not ask for. A deploy-time config bean is the right layer.
+- **Impact:** `BudgetCalculator.evaluate(amount, spent, thresholds)` is the only
+  classifier; unit tests cover both defaults and custom thresholds.

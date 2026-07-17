@@ -117,6 +117,35 @@ export const BUDGET_PERIOD_OPTIONS = (
   Object.keys(BUDGET_PERIOD_LABELS) as BudgetPeriod[]
 ).map((value) => ({ value, label: BUDGET_PERIOD_LABELS[value] }));
 
+/** Maps a budget's health status to the badge variant matching the status palette. */
+export function budgetStatusBadgeVariant(
+  status: 'HEALTHY' | 'WARNING' | 'EXCEEDED',
+): 'success' | 'warning' | 'danger' {
+  switch (status) {
+    case 'WARNING':
+      return 'warning';
+    case 'EXCEEDED':
+      return 'danger';
+    case 'HEALTHY':
+    default:
+      return 'success';
+  }
+}
+
+/** Maps a budget's health status to the progress-fill tone. */
+export function budgetStatusTone(
+  status: 'HEALTHY' | 'WARNING' | 'EXCEEDED',
+): 'success' | 'warning' | 'danger' {
+  return budgetStatusBadgeVariant(status);
+}
+
+/** Short, human label for a budget's health status. */
+export const BUDGET_STATUS_LABELS: Record<'HEALTHY' | 'WARNING' | 'EXCEEDED', string> = {
+  HEALTHY: 'Healthy',
+  WARNING: 'Warning',
+  EXCEEDED: 'Exceeded',
+};
+
 /** A neutral fallback color for categories/accounts without one. */
 export const FALLBACK_COLOR = '#94A3B8';
 

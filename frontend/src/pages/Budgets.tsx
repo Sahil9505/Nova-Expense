@@ -4,20 +4,23 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/loading-state';
+import { StatCard } from '@/components/ui/stat-card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
 import { BudgetFormDialog } from '@/components/finance/BudgetFormDialog';
-import { BUDGET_PERIOD_LABELS, categoryIcon, colorOf } from '@/lib/finance';
+import { BUDGET_PERIOD_LABELS, budgetStatusBadgeVariant, categoryIcon, colorOf } from '@/lib/finance';
 import { formatCurrency } from '@/lib/utils';
-import { useBudgets, useDeleteBudget, useUpdateBudget } from '@/hooks/useBudgets';
+import { useBudgets, useBudgetSummary, useDeleteBudget, useUpdateBudget } from '@/hooks/useBudgets';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { ApiError } from '@/lib/api';
-import type { Budget } from '@/types';
+import type { Budget, BudgetMetrics, BudgetWithMetrics, StatMetric } from '@/types';
 
 export function Budgets() {
   const { toast } = useToast();
-  const query = useBudgets();
+  const listQuery = useBudgets();
+  const summaryQuery = useBudgetSummary();
   const deleteBudget = useDeleteBudget();
   const updateBudget = useUpdateBudget();
   const { data: currentUser } = useCurrentUser();
@@ -67,7 +70,72 @@ export function Budgets() {
     }
   };
 
-  const budgets = useMemo(() => query.data ?? [], [query.data]);
+  // Index the live metrics by budget id so each card can overlay spent/remaining/status.
+  // The summary is the single source of truth for intelligence; fall back to the bare
+  // list (no metrics) only if the summary is still loading or fails.
+  const metricsById = useMemo(() => {
+    const map = new Map<string, BudgetMetrics>();
+    (summaryQuery.data?.budgets ?? []).forEach((entry: BudgetWithMetrics) => {
+      map.set(entry.budget.id, entry.metrics);
+    });
+    return map;
+  }, [summaryQuery.data]);
+
+  const budgets = useMemo<Budget[]>(() => {
+    if (summaryQuery.data) {
+      return summaryQuery.data.budgets.map((entry) => entry.budget);
+    }
+    return listQuery.data ?? [];
+  }, [summaryQuery.data, listQuery.data]);
+
+  const summary = summaryQuery.data;
+
+  const summaryMetrics: StatMetric[] = summary
+    ? [
+        {
+          id: 'active',
+          label: 'Active Budgets',
+          value: summary.activeBudgets,
+          format: 'number',
+          trend: 0,
+          trendDirection: 'flat',
+          caption: `${summary.warningCount} warning · ${summary.exceededCount} exceeded`,
+        },
+        {
+          id: 'budgeted',
+          label: 'Total Budgeted',
+          value: summary.totalBudgeted,
+          format: 'currency',
+          currency,
+          trend: 0,
+          trendDirection: 'flat',
+          caption: 'This period',
+        },
+        {
+          id: 'spent',
+          label: 'Total Spent',
+          value: summary.totalSpent,
+          format: 'currency',
+          currency,
+          trend: 0,
+          trendDirection: 'flat',
+          caption: 'Across active budgets',
+        },
+        {
+          id: 'remaining',
+          label: 'Remaining Budget',
+          value: summary.totalRemaining,
+          format: 'currency',
+          currency,
+          trend: 0,
+          trendDirection: 'flat',
+          caption: 'Left to spend',
+        },
+      ]
+    : [];
+
+  const isLoading = listQuery.isLoading || summaryQuery.isLoading;
+  const isError = listQuery.isError && summaryQuery.isError;
 
   return (
     <div className="flex flex-col gap-6">
@@ -84,16 +152,30 @@ export function Budgets() {
         </Button>
       </div>
 
-      {query.isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className="h-40 w-full rounded-lg" />
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-28 w-full rounded-lg" />
           ))}
         </div>
-      ) : query.isError ? (
+      ) : summaryMetrics.length > 0 ? (
+        <section aria-label="Budget summary" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {summaryMetrics.map((metric) => (
+            <StatCard key={metric.id} metric={metric} />
+          ))}
+        </section>
+      ) : null}
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} className="h-48 w-full rounded-lg" />
+          ))}
+        </div>
+      ) : isError ? (
         <div className="rounded-lg border border-border bg-surface p-6 text-sm">
           <p className="font-medium">We couldn't load your budgets.</p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => query.refetch()}>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => listQuery.refetch()}>
             Try again
           </Button>
         </div>
@@ -112,9 +194,14 @@ export function Budgets() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {budgets.map((budget) => {
+            const metrics = metricsById.get(budget.id);
             const category = budget.category;
             const CategoryIcon = category ? categoryIcon(category.icon) : Target;
             const color = category ? colorOf(category.color) : '#94A3B8';
+            const percentage = metrics ? metrics.percentageUsed : 0;
+            const spent = metrics ? metrics.spent : 0;
+            const remaining = metrics ? metrics.remaining : budget.amount;
+            const status = metrics?.status ?? 'HEALTHY';
             return (
               <Card key={budget.id} className="flex flex-col gap-4 p-5">
                 <div className="flex items-start justify-between gap-3">
@@ -132,11 +219,14 @@ export function Budgets() {
                       </p>
                     </div>
                   </div>
-                  {budget.active ? (
-                    <Badge variant="success">Active</Badge>
-                  ) : (
-                    <Badge variant="warning">Inactive</Badge>
-                  )}
+                  <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
+                    {budget.active ? (
+                      <Badge variant="success">Active</Badge>
+                    ) : (
+                      <Badge variant="warning">Inactive</Badge>
+                    )}
+                    <Badge variant={budgetStatusBadgeVariant(status)}>{status}</Badge>
+                  </div>
                 </div>
 
                 <div>
@@ -149,6 +239,22 @@ export function Budgets() {
                 {budget.description ? (
                   <p className="line-clamp-2 text-xs text-muted-foreground">{budget.description}</p>
                 ) : null}
+
+                <div className="flex flex-col gap-2">
+                  <Progress
+                    value={percentage}
+                    tone={budgetStatusBadgeVariant(status)}
+                    label={`${budget.name}: ${percentage}% used`}
+                  />
+                  <div className="flex items-center justify-between text-xs tabular-nums">
+                    <span className="text-muted-foreground">
+                      {formatCurrency(spent, currency)} spent
+                    </span>
+                    <span className="font-medium">
+                      {formatCurrency(remaining, currency)} left
+                    </span>
+                  </div>
+                </div>
 
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" onClick={() => openEdit(budget)}>

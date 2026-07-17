@@ -3,6 +3,53 @@
 All notable changes to Nova are documented in this file. The format is based on
 keeping a clear record of Added, Improved, and Fixed work per release.
 
+## [0.5.0] — Phase 4B: Budget Intelligence
+
+### Added
+- **Reusable Budget Intelligence engine (backend).** A centralized, presentation-agnostic
+  calculation layer under `com.nova.finance.budget`:
+  - `BudgetCalculator` — the single source of budget math (remaining, percentage
+    used, and `HEALTHY`/`WARNING`/`EXCEEDED` status from configurable thresholds).
+  - `BudgetPeriods` — resolves each budget's spend window (week/month/year use the
+    period containing "today"; custom uses its own inclusive range).
+  - `BudgetCalculationService` — orchestrates per-budget and rolled-up summaries.
+- **Configurable health thresholds.** `nova.budget.warning-threshold` (default `0.80`)
+  and `nova.budget.exceeded-threshold` (default `1.00`) via `BudgetProperties`,
+  bound with `@EnableConfigurationProperties` like the existing config beans.
+- **Budget endpoints (no breaking changes).** `GET /api/budgets/summary` returns
+  the rolled-up overview (active budgets, total budgeted, total spent, remaining,
+  status counts, and per-budget metrics); `GET /api/budgets/{id}/metrics` returns a
+  single budget's live figures. Both follow the standard `ApiResponse` envelope.
+- **N+1-free aggregation.** The summary loads all relevant expenses in a single
+  query over the union of budget windows, then buckets them in memory per budget —
+  no per-budget round-trips.
+- **Budget UI.** The Budgets page now shows, per card: amount, spent, remaining,
+  percentage used, a live status badge, and an animated accessible `Progress` bar.
+  A summary strip (active budgets, total budgeted, total spent, remaining) reuses
+  the existing `StatCard` layout.
+- **Reusable `Progress` component.** `'@/components/ui/progress'` — animated
+  (`transition-[width]`, reduced-motion aware), theme-consistent, `role="progressbar"`
+  with value bounds. Built for reuse by future Goals/Analytics/AI modules.
+- **Dashboard budget integration.** New Budget Health, Recently Exceeded, and Healthy
+  Budgets widgets (`BudgetIntelligenceWidget`) compose from one summary query,
+  dropping into the existing dashboard layout without disturbing other widgets.
+- **Tests.** `BudgetCalculatorTest` (percentage/remaining/status boundaries, zero and
+  over-budget) and `BudgetPeriodsTest` (weekly/monthly/yearly/custom windows)
+  are pure unit tests; `BudgetIntelligenceApiTest` covers the new endpoints end-to-end
+  (category vs. overall aggregation, income exclusion, the four periods, deactivation
+  effects). The shared test harness now reuses seeded categories idempotently.
+
+### Improved
+- Budget figures are now computed from real transaction data (no placeholders, no mock
+  calculations) and never persisted — they are always derived on read.
+- The existing `Budget`/list/get/PATCH/DELETE APIs and DTOs are unchanged (backward
+  compatible); intelligence is purely additive.
+
+### Fixed
+- A lazy-proxy `LazyInitializationException` when resolving the owner's preferred
+  currency for the summary; the currency is now projected inside the service
+  transaction via `UserRepository.findPreferredCurrencyById`.
+
 ## [0.4.0] — Phase 4A: Budget Foundation
 
 ### Added

@@ -31,6 +31,11 @@ nova:
     secret: ${JWT_SECRET:nova-local-development-secret-do-not-use-in-production-0123456789}
     access-token-minutes: ${JWT_ACCESS_TOKEN_MINUTES:15}
     refresh-token-days: ${JWT_REFRESH_TOKEN_DAYS:30}
+  budget:
+    # Budget health thresholds as fractions of the limit (not percentages).
+    # Defaults apply when omitted; override per deployment to tune status boundaries.
+    warning-threshold: ${NOVA_BUDGET_WARNING:0.80}   # WARNING once 80% is spent
+    exceeded-threshold: ${NOVA_BUDGET_EXCEEDED:1.00} # EXCEEDED once 100% is spent
 
 info:
   app:

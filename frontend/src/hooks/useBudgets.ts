@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { budgetsApi } from '@/lib/api';
-import type { Budget, CreateBudgetPayload, UpdateBudgetPayload } from '@/types';
+import type { Budget, BudgetSummary, CreateBudgetPayload, UpdateBudgetPayload } from '@/types';
 
 const BUDGETS_KEY = ['budgets'] as const;
 
@@ -12,10 +12,21 @@ export function useBudgets() {
   });
 }
 
+const BUDGET_SUMMARY_KEY = ['budgets', 'summary'] as const;
+
+/** Loads the rolled-up Budget Intelligence overview (active totals + per-budget metrics). */
+export function useBudgetSummary() {
+  return useQuery<BudgetSummary>({
+    queryKey: BUDGET_SUMMARY_KEY,
+    queryFn: () => budgetsApi.summary(),
+  });
+}
+
 function useInvalidateBudgets() {
   const queryClient = useQueryClient();
   return () => {
     queryClient.invalidateQueries({ queryKey: BUDGETS_KEY });
+    queryClient.invalidateQueries({ queryKey: BUDGET_SUMMARY_KEY });
   };
 }
 
