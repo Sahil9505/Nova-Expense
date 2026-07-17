@@ -260,3 +260,36 @@ export interface UpdateBudgetPayload {
   endDate?: string;
   active?: boolean;
 }
+
+// ---------------------------------------------------------------------------
+// Budget Intelligence (Phase 4B)
+// ---------------------------------------------------------------------------
+
+export type BudgetStatus = 'HEALTHY' | 'WARNING' | 'EXCEEDED';
+
+/** Live, derived figures for a single budget over its current period. */
+export interface BudgetMetrics {
+  amount: number;
+  spent: number;
+  remaining: number;
+  percentageUsed: number;
+  status: BudgetStatus;
+}
+
+/** A budget record paired with its live metrics. */
+export interface BudgetWithMetrics {
+  budget: Budget;
+  metrics: BudgetMetrics;
+}
+
+/** Rolled-up budget health for the summary strip and dashboard widgets. */
+export interface BudgetSummary {
+  activeBudgets: number;
+  totalBudgeted: number;
+  totalSpent: number;
+  totalRemaining: number;
+  currency: string;
+  warningCount: number;
+  exceededCount: number;
+  budgets: BudgetWithMetrics[];
+}

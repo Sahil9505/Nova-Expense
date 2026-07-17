@@ -20,6 +20,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/loading-state';
 import { StatCard } from '@/components/ui/stat-card';
 import { useDashboardSummary } from '@/hooks/useDashboard';
+import { useBudgetSummary } from '@/hooks/useBudgets';
+import { BudgetIntelligenceWidget } from '@/components/finance/BudgetIntelligenceWidget';
 import { useTheme } from '@/context/ThemeProvider';
 import { colorOf } from '@/lib/finance';
 import { formatCurrency, formatCompact } from '@/lib/utils';
@@ -54,6 +56,7 @@ const subtitleFor = (tx: Transaction) =>
 export function Dashboard() {
   const { theme } = useTheme();
   const query = useDashboardSummary();
+  const budgetSummary = useBudgetSummary();
 
   const axisColor = theme === 'dark' ? '#94A3B8' : '#475569';
   const gridColor = theme === 'dark' ? '#334155' : '#E2E8F0';
@@ -259,6 +262,47 @@ export function Dashboard() {
             </div>
           )}
         </ChartCard>
+      </section>
+
+      <section aria-label="Budgets" className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold tracking-tight">Budgets</h3>
+            <p className="text-sm text-muted-foreground">How your spending measures up this period.</p>
+          </div>
+          {budgetSummary.data ? (
+            <Badge variant="outline">
+              {budgetSummary.data.activeBudgets} active · {budgetSummary.data.warningCount} warning ·{' '}
+              {budgetSummary.data.exceededCount} exceeded
+            </Badge>
+          ) : null}
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <BudgetIntelligenceWidget
+            title="Budget Health"
+            statusFilter="WARNING"
+            sortByUsage
+            limit={4}
+            emptyTitle="No budgets near their limit"
+            emptyDescription="Budgets at 80–99% of their limit show up here."
+          />
+          <BudgetIntelligenceWidget
+            title="Recently Exceeded"
+            statusFilter="EXCEEDED"
+            sortByUsage
+            limit={4}
+            emptyTitle="No exceeded budgets"
+            emptyDescription="Budgets over their limit appear here so you can act on them."
+          />
+          <BudgetIntelligenceWidget
+            title="Healthy Budgets"
+            statusFilter="HEALTHY"
+            limit={4}
+            emptyTitle="No healthy budgets yet"
+            emptyDescription="Budgets under 80% of their limit show up here."
+          />
+        </div>
       </section>
 
       <Card>

@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -101,6 +102,18 @@ public abstract class AbstractFinanceApiTest {
     }
 
     protected String createCategory(String token, String name, String type) throws Exception {
+        // Idempotent: a registration seeds system categories, so reuse an existing
+        // same-name category (case-insensitive) instead of forcing a 409.
+        MvcResult list = mockMvc.perform(get("/api/categories")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        for (var node : parse(list)) {
+            if (name.equalsIgnoreCase(node.get("name").asText())
+                    && type.equalsIgnoreCase(node.get("type").asText())) {
+                return node.get("id").asText();
+            }
+        }
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("name", name);
         body.put("type", type);
