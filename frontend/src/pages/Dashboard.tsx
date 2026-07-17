@@ -21,7 +21,9 @@ import { Skeleton } from '@/components/ui/loading-state';
 import { StatCard } from '@/components/ui/stat-card';
 import { useDashboardSummary } from '@/hooks/useDashboard';
 import { useBudgetSummary } from '@/hooks/useBudgets';
+import { useGoalSummary } from '@/hooks/useGoals';
 import { BudgetIntelligenceWidget } from '@/components/finance/BudgetIntelligenceWidget';
+import { GoalDashboardWidget } from '@/components/finance/GoalDashboardWidget';
 import { useTheme } from '@/context/ThemeProvider';
 import { colorOf } from '@/lib/finance';
 import { formatCurrency, formatCompact } from '@/lib/utils';
@@ -57,6 +59,7 @@ export function Dashboard() {
   const { theme } = useTheme();
   const query = useDashboardSummary();
   const budgetSummary = useBudgetSummary();
+  const goalSummary = useGoalSummary();
 
   const axisColor = theme === 'dark' ? '#94A3B8' : '#475569';
   const gridColor = theme === 'dark' ? '#334155' : '#E2E8F0';
@@ -301,6 +304,45 @@ export function Dashboard() {
             limit={4}
             emptyTitle="No healthy budgets yet"
             emptyDescription="Budgets under 80% of their limit show up here."
+          />
+        </div>
+      </section>
+
+      <section aria-label="Goals" className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold tracking-tight">Goals</h3>
+            <p className="text-sm text-muted-foreground">Progress toward your long-term objectives.</p>
+          </div>
+          {goalSummary.data ? (
+            <Badge variant="outline">
+              {goalSummary.data.activeGoals} active · {goalSummary.data.achievedGoals} achieved ·{' '}
+              {goalSummary.data.overdueGoals} overdue
+            </Badge>
+          ) : null}
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <GoalDashboardWidget
+            selection="progress"
+            title="Goal Progress"
+            limit={4}
+            emptyTitle="No active goals yet"
+            emptyDescription="Create a goal to start tracking your progress here."
+          />
+          <GoalDashboardWidget
+            selection="upcoming"
+            title="Upcoming Deadlines"
+            limit={4}
+            emptyTitle="No upcoming deadlines"
+            emptyDescription="Goals you haven't reached yet appear here, soonest first."
+          />
+          <GoalDashboardWidget
+            selection="completed"
+            title="Recently Completed"
+            limit={4}
+            emptyTitle="No completed goals yet"
+            emptyDescription="Goals you've reached show up here."
           />
         </div>
       </section>

@@ -212,3 +212,36 @@ export const budgetUpdateSchema = budgetBaseSchema.partial().superRefine(refineB
 
 export type BudgetUpdateValues = z.infer<typeof budgetUpdateSchema>;
 
+// ---------------------------------------------------------------------------
+// Goal validation (Phase 4C)
+// ---------------------------------------------------------------------------
+
+export const GOAL_TYPES = ['SAVINGS', 'DEBT_PAYOFF', 'CUSTOM'] as const;
+
+export const goalSchema = z.object({
+  name: z.string().trim().min(1, 'Goal name is required').max(120, 'Name is too long'),
+  type: z.enum(GOAL_TYPES),
+  targetAmount: z.coerce
+    .number({ invalid_type_error: 'Target amount is required' })
+    .positive('Target amount must be greater than zero'),
+  targetDate: z.string().min(1, 'Target date is required'),
+  currentAmount: z.coerce.number().min(0, 'Current amount cannot be negative').optional(),
+  description: z.string().trim().max(255, 'Description is too long').optional().or(z.literal('')),
+});
+
+export type GoalValues = z.infer<typeof goalSchema>;
+
+export const goalUpdateSchema = goalSchema.partial();
+
+export type GoalUpdateValues = z.infer<typeof goalUpdateSchema>;
+
+export const goalContributionSchema = z.object({
+  amount: z.coerce
+    .number({ invalid_type_error: 'Amount is required' })
+    .positive('Amount must be greater than zero'),
+  note: z.string().trim().max(255, 'Note is too long').optional().or(z.literal('')),
+  contributedAt: z.string().min(1, 'Date is required'),
+});
+
+export type GoalContributionValues = z.infer<typeof goalContributionSchema>;
+

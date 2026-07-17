@@ -4,6 +4,7 @@ import { Dashboard } from '@/pages/Dashboard';
 import { Accounts } from '@/pages/Accounts';
 import { Categories } from '@/pages/Categories';
 import { Budgets } from '@/pages/Budgets';
+import { Goals } from '@/pages/Goals';
 import { Transactions } from '@/pages/Transactions';
 import { TransactionFormPage } from '@/pages/TransactionFormPage';
 import { Login } from '@/pages/Login';
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
       { path: 'accounts', element: <Accounts /> },
       { path: 'categories', element: <Categories /> },
       { path: 'budgets', element: <Budgets /> },
+      { path: 'goals', element: <Goals /> },
       { path: 'transactions', element: <Transactions /> },
       { path: 'transactions/new', element: <TransactionFormPage /> },
       { path: 'transactions/:id/edit', element: <TransactionFormPage /> },

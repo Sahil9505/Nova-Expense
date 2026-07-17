@@ -69,3 +69,17 @@ None known.
   existing same-name (case-insensitive, same type) category before attempting a
   create. No production code changed.
 - **Resolved in:** v0.5.0
+
+### B-4C-1 — Goal tests needed to clear both goals and contributions
+- **Severity:** Low (test-only)
+- **Symptom:** The shared in-memory H2 database is reused across the whole test run
+  (`ddl-auto=create-drop` only drops at the end), so goal + contribution rows committed
+  by one test method would leak into the next, producing duplicate-name conflicts and
+  inflated summary counts.
+- **Root cause:** `register`/`create*` helpers commit their own transactions; the budget
+  harness only cleared `budgets`, leaving the new `goal_contributions`/`goals` tables
+  populated between test methods.
+- **Fix:** `GoalApiTest` and `GoalContributionIntegrationTest` extend the finance harness
+  and add a `@BeforeEach` that deletes contributions then goals before each method,
+  isolating goal suites without touching other finance tables. No production code changed.
+- **Resolved in:** v0.6.0

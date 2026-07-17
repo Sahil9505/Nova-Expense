@@ -145,4 +145,14 @@ public abstract class AbstractFinanceApiTest {
                 .andReturn();
         return parse(result).get("id").asText();
     }
+
+    protected String createGoal(String token, Map<String, Object> body) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/goals")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(body)))
+                .andExpect(status().isOk())
+                .andReturn();
+        return parse(result).get("id").asText();
+    }
 }

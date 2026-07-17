@@ -144,6 +144,7 @@ export const api = {
 
 import type {
   Account,
+  AddGoalContributionPayload,
   Budget,
   BudgetSummary,
   BudgetWithMetrics,
@@ -151,13 +152,18 @@ import type {
   CreateAccountPayload,
   CreateBudgetPayload,
   CreateCategoryPayload,
+  CreateGoalPayload,
   CreateTransactionPayload,
   DashboardSummary,
+  Goal,
+  GoalDetail,
+  GoalSummary,
   Transaction,
   TransactionQuery,
   UpdateAccountPayload,
   UpdateBudgetPayload,
   UpdateCategoryPayload,
+  UpdateGoalPayload,
   UpdateTransactionPayload,
 } from '@/types';
 
@@ -216,4 +222,25 @@ export const budgetsApi = {
   remove: (id: string) => api.delete<void>(`/api/budgets/${id}`),
   summary: () => api.get<BudgetSummary>('/api/budgets/summary'),
   metrics: (id: string) => api.get<BudgetWithMetrics>(`/api/budgets/${id}/metrics`),
+};
+
+// ---------------------------------------------------------------------------
+// Goals API (Phase 4C)
+// ---------------------------------------------------------------------------
+
+export const goalsApi = {
+  list: (active?: boolean) => {
+    const params = new URLSearchParams();
+    if (active !== undefined) params.set('active', String(active));
+    const qs = params.toString();
+    return api.get<Goal[]>(`/api/goals${qs ? `?${qs}` : ''}`);
+  },
+  get: (id: string) => api.get<GoalDetail>(`/api/goals/${id}`),
+  create: (payload: CreateGoalPayload) => api.post<Goal>('/api/goals', payload),
+  update: (id: string, payload: UpdateGoalPayload) =>
+    api.patch<Goal>(`/api/goals/${id}`, payload),
+  remove: (id: string) => api.delete<void>(`/api/goals/${id}`),
+  addContribution: (id: string, payload: AddGoalContributionPayload) =>
+    api.post<GoalDetail>(`/api/goals/${id}/contributions`, payload),
+  summary: () => api.get<GoalSummary>('/api/goals/summary'),
 };

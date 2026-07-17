@@ -5,6 +5,7 @@ import {
   PieChart,
   Receipt,
   Settings,
+  Target,
   Wallet,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
@@ -25,6 +26,7 @@ const navItems: NavItem[] = [
   { label: 'Accounts', icon: CreditCard, to: '/accounts' },
   { label: 'Categories', icon: PieChart, to: '/categories' },
   { label: 'Budgets', icon: Wallet, to: '/budgets' },
+  { label: 'Goals', icon: Target, to: '/goals' },
   { label: 'Analytics', icon: BarChart3, soon: true },
   { label: 'Profile', icon: Settings, to: '/settings/profile' },
 ];
@@ -94,7 +96,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
       <div className="rounded-md bg-surface-2 px-3 py-3 text-xs text-muted-foreground">
         <p className="font-medium text-foreground">Nova Finance</p>
-        <p>Phase 4A · v0.4.0</p>
+        <p>Phase 4C · v0.6.0</p>
       </div>
     </div>
   );

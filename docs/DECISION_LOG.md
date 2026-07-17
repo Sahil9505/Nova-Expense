@@ -224,3 +224,152 @@ rationale.
   spec does not ask for. A deploy-time config bean is the right layer.
 - **Impact:** `BudgetCalculator.evaluate(amount, spent, thresholds)` is the only
   classifier; unit tests cover both defaults and custom thresholds.
+
+---
+
+## Phase 4C — Financial Goals
+
+### D-4C-1 — Goals are a first-class domain mirroring the Budget module
+
+- **Date:** 2026-07-17
+- **Decision:** Goals live in `com.nova.finance.goal` with the same layered shape as
+  budgets: entity → repository → service → DTOs → MapStruct mapper → controller. The
+  model reuses `BaseEntity` (audit columns), the `ApiResponse` envelope, the existing
+  exception types (`ConflictException` / `BadRequestException` / `ResourceNotFoundException`),
+  and `UserRepository.findPreferredCurrencyById` for the summary currency.
+- **Reason:** The Architecture Bible mandates consistency over novelty; budgets are the
+  closest solved analog and their patterns are proven. Reusing them keeps the codebase
+  uniform and shrinks the surface a future phase must learn.
+- **Alternatives considered:**
+  1. A generic `objectives` table shared by goals and future modules.
+  2. Embedding goals inside the budget module.
+- **Why alternatives were rejected:** (1) over-engineering for one domain and would
+  force goals into a budget-shaped schema; (2) goals are conceptually distinct from
+  budgets (accumulate-toward-a-target vs. spend-against-a-limit) and deserve their own
+  bounded context.
+- **Impact:** Every goal endpoint returns the standard envelope; the Goals UI reuses
+  `Card`/`Dialog`/`Progress`/`Badge`/`StatCard`/`EmptyState`/`ConfirmDialog` exactly as
+  budgets do.
+
+### D-4C-2 — Pure, centralized goal math in `GoalCalculator`
+
+- **Date:** 2026-07-17
+- **Decision:** All goal progress (percentage complete, remaining, derived status,
+  estimated completion) is computed by `GoalCalculator` + `GoalCalculation` — pure,
+  persistence-free, reusable value objects in the goal package, parallel to
+  `BudgetCalculator` / `BudgetCalculation`.
+- **Reason:** The spec requires the same calculations to be reusable by future
+  Analytics/AI modules without re-deriving them in the controller or UI. D-4B-1 already
+  established this pattern for budgets.
+- **Alternatives considered:**
+  1. Reuse `BudgetCalculator` for goals.
+  2. Compute progress in the controller.
+- **Why alternatives were rejected:** (1) budget math is window/spend-based and does not
+  model accumulated-progress-toward-a-target; forcing a fit would distort both domains.
+  (2) pushes business rules to the web layer and breaks reuse/testability.
+- **Impact:** `GoalCalculator` is unit-tested in isolation; the service only orchestrates
+  data and calls `evaluate(...)`.
+
+### D-4C-3 — `currentAmount` is a maintained running total, not a sum computed on read
+
+- **Date:** 2026-07-17
+- **Decision:** A goal stores `current_amount` and each contribution updates it inside
+  the same `@Transactional` method that inserts the `goal_contributions` row. Reads
+  never recompute a SUM over history.
+- **Reason:** This mirrors how Nova keeps `account.balance` in sync with `transactions`
+  — a single, always-consistent source of truth that stays correct under concurrency and
+  makes the list/summary endpoints O(1) per goal (no aggregation per read).
+- **Alternatives considered:**
+  1. Derive `currentAmount` from `SUM(goal_contributions.amount)` on every read.
+  2. Store contributions only and compute the total in the controller.
+- **Why alternatives were rejected:** (1) a N+1-style aggregate on list/summary reads and
+  drift risk if a contribution is ever corrected; (2) pushes math to the web layer.
+  Maintaining the total also lets a goal be seeded with an existing balance
+  (`createGoal.currentAmount`) for goals already in progress.
+- **Impact:** Contributions are immutable history; `current_amount` is clamped to the
+  target so a goal can never report more than 100% complete.
+
+### D-4C-4 — One query for the whole goals list and summary (no N+1)
+
+- **Date:** 2026-07-17
+- **Decision:** `GoalContributionRepository.aggregateByGoalIds(goalIds)` loads total /
+  count / first-date / last-date for every goal in a single grouped query; the service
+  pairs the rows with the entities in memory. The list, detail, and summary all share
+  this single-load pattern.
+- **Reason:** The spec forbids N+1 and asks to reuse existing aggregation patterns. A
+  single grouped query — like `BudgetCalculationService`'s union-window expense load —
+  scales to any number of goals with zero extra round-trips.
+- **Alternatives considered:**
+  1. One aggregate query per goal.
+  2. Load every contribution row and group in memory.
+- **Why alternatives were rejected:** (1) classic N+1; (2) loads far more rows than
+  needed (full history) when only stats are required for the list/summary.
+- **Impact:** `GoalResponse` carries a fully-derived `GoalProgress` (including estimated
+  completion) everywhere, so the UI never issues follow-up calls.
+
+### D-4C-5 — Status is mostly derived; `PAUSED` is the only manual input
+
+- **Date:** 2026-07-17
+- **Decision:** `GoalStatus` (NOT_STARTED / IN_PROGRESS / ACHIEVED / OVERDUE / PAUSED) is
+  derived from progress and `target_date`, except `PAUSED`, which the API sets via
+  `paused`. Precedence: ACHIEVED > PAUSED > OVERDUE > IN_PROGRESS > NOT_STARTED.
+- **Reason:** Deriving status removes a class of "stale status" bugs and matches the
+  spec's "derived where appropriate". A manual pause is genuinely user intent and cannot
+  be inferred. `ACHIEVED` takes top precedence so a completed goal is never mislabeled.
+- **Alternatives considered:**
+  1. Persist a mutable `status` column updated on every write.
+  2. Derive everything including pause from data.
+- **Why alternatives were rejected:** (1) drifts from reality and needs careful
+  invalidation; (2) a pause is a preference, not derivable from amounts/dates.
+- **Impact:** No `status` column exists on the entity; the API never accepts it. The
+  frontend drives pause/resume through `PATCH { paused }`.
+
+### D-4C-6 — Intelligence is additive; the existing API is untouched
+
+- **Date:** 2026-07-17
+- **Decision:** New endpoints (`POST/GET/PATCH/DELETE /api/goals`,
+  `POST /api/goals/{id}/contributions`, `GET /api/goals/summary`) are added alongside the
+  existing finance API; no prior endpoint or DTO is modified.
+- **Reason:** Rule 6 (backward compatibility) and the Architecture Bible's one-envelope
+  convention. Extending rather than changing keeps every prior client working.
+- **Alternatives considered:**
+  1. Fold goals into the budget endpoints.
+  2. Version the API.
+- **Why alternatives were rejected:** (1) goals are not budgets; (2) premature for an
+  additive feature.
+- **Impact:** Frontend fetches `/summary` once for both the Goals strip and the dashboard
+  widgets; the bare list remains available for forms/lookups.
+
+### D-4C-7 — `goal_type` is a string enum for forward-compatible expansion
+
+- **Date:** 2026-07-17
+- **Decision:** `goals.goal_type` is `VARCHAR(32)` storing SAVINGS / DEBT_PAYOFF / CUSTOM
+  via `Goal.Type` (`EnumType.STRING`), exactly like `budgets.period`.
+- **Reason:** The spec requires SAVINGS / DEBT_PAYOFF / CUSTOM now but "allow future
+  expansion without schema rewrites". Storing the enum name (not an ordinal) means a new
+  type is a data/code change, not a migration.
+- **Alternatives considered:**
+  1. A join-table of goal types.
+  2. A Postgres `ENUM` type.
+- **Why alternatives were rejected:** (1) premature complexity for three fixed values;
+  (2) altering a native enum later requires a migration and locks the column's domain.
+- **Impact:** V5 migration never edits V1/V3/V4; the type list can grow by adding an enum
+  constant.
+
+### D-4C-8 — Dashboard integration reuses the `BudgetIntelligenceWidget` pattern
+
+- **Date:** 2026-07-17
+- **Decision:** The dashboard gains a `GoalDashboardWidget` (filterable: Goal Progress /
+  Upcoming Deadlines / Recently Completed) composed from one `GET /api/goals/summary`
+  query, dropped into the existing dashboard layout beside the budget widgets.
+- **Reason:** Reuses the proven widget + single-summary-query pattern (D-4B-4) so the
+  dashboard stays consistent and issues no extra per-goal requests.
+- **Alternatives considered:**
+  1. A bespoke goals dashboard section with its own endpoints.
+  2. Embedding goals inside the budget widgets.
+- **Why alternatives were rejected:** (1) duplicates the widget pattern; (2) conflates
+  two distinct domains. The widget composes client-side from the shared summary, keeping
+  the API surface minimal.
+- **Impact:** Four requested dashboard slices (Goal Summary, Goal Progress, Upcoming
+  Deadlines, Recently Completed) are covered by the summary header + three filtered
+  widget instances.

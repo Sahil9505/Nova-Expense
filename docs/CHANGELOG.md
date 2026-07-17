@@ -3,6 +3,56 @@
 All notable changes to Nova are documented in this file. The format is based on
 keeping a clear record of Added, Improved, and Fixed work per release.
 
+## [0.6.0] — Phase 4C: Financial Goals
+
+### Added
+- **Goals domain (backend).** A first-class `com.nova.finance.goal` module: `Goal` and
+  `GoalContribution` entities, repositories, `GoalService`, DTOs, a MapStruct `GoalMapper`,
+  and `GoalController` — following the same layered conventions as the budget module.
+- **Goal types.** `SAVINGS`, `DEBT_PAYOFF`, and `CUSTOM` (stored as a string enum so new
+  types are a code/data change, never a migration).
+- **Goal CRUD + lifecycle.** `POST/GET/PATCH/DELETE /api/goals` with an optional
+  `?active` filter. Goals soft-delete (deactivate) like budgets/accounts; a separate
+  `paused` flag parks a goal without losing it.
+- **Goal contributions.** `POST /api/goals/{id}/contributions` logs an immutable
+  contribution (amount, optional note, date). Each contribution updates the goal's
+  maintained `currentAmount` in the same transaction, clamped to the target — the same
+  single-source-of-truth pattern Nova uses for account balances. History is returned by
+  `GET /api/goals/{id}` for the progress timeline.
+- **Derived progress.** A pure `GoalCalculator` / `GoalCalculation` engine computes
+  percentage complete, remaining, derived `GoalStatus` (NOT_STARTED / IN_PROGRESS /
+  ACHIEVED / OVERDUE / PAUSED), and a best-effort estimated completion date from
+  contribution velocity. Mirrors the reusable Budget Intelligence engine (D-4B-1).
+- **Goal endpoints (no breaking changes).** `GET /api/goals/summary` returns the rolled-up
+  overview (totals, status counts, overall percent) plus every goal with derived progress
+  in one response. A single grouped query aggregates contribution stats for all goals, so
+  the list/summary never issue per-goal queries (no N+1).
+- **Goal UI.** A new Goals page (`/goals`) with summary `StatCard`s, a responsive card
+  grid, skeleton loading, an empty state, a create/edit `GoalFormDialog` (React Hook Form +
+  Zod), a `ContributionDialog`, and a `GoalDetailDialog` showing the contribution history
+  timeline. Reuses `Card`/`Dialog`/`Progress`/`Badge`/`StatCard`/`ConfirmDialog` — no new
+  design primitives.
+- **Dashboard goal integration.** `GoalDashboardWidget` composes Goal Summary, Goal
+  Progress, Upcoming Deadlines, and Recently Completed from one summary query, dropping
+  into the existing dashboard layout beside the budget widgets.
+- **Sidebar + version.** Goals nav item added; in-app version marker advanced to
+  Phase 4C (v0.6.0).
+- **Tests.** `GoalCalculatorTest` (percentage/remaining/status precedence/estimated
+  completion) is pure; `GoalApiTest` and `GoalContributionIntegrationTest` cover auth,
+  CRUD, validation, duplicate-name conflict, soft-delete, pause, cross-user isolation,
+  contribution math (including target clamp), and the summary roll-up.
+- **Flyway migration V5.** Adds `goals` and `goal_contributions` tables (with indexes and
+  cascade deletes) completing the goals schema; V1/V3/V4 are never edited.
+
+### Improved
+- Goals are computed from real contribution data (no placeholders, no mock calculations)
+  and never persist a status column — status is always derived on read.
+- The existing budgets/accounts/transactions/dashboard APIs and DTOs are unchanged
+  (backward compatible); goals are purely additive.
+
+### Fixed
+- None in this phase. (See `BUG_TRACKER.md` for carried-forward items.)
+
 ## [0.5.0] — Phase 4B: Budget Intelligence
 
 ### Added

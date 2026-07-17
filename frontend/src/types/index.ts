@@ -293,3 +293,93 @@ export interface BudgetSummary {
   exceededCount: number;
   budgets: BudgetWithMetrics[];
 }
+
+// ---------------------------------------------------------------------------
+// Goal domain (Phase 4C)
+// ---------------------------------------------------------------------------
+
+export type GoalType = 'SAVINGS' | 'DEBT_PAYOFF' | 'CUSTOM';
+export type GoalStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'ACHIEVED' | 'OVERDUE' | 'PAUSED';
+
+/** Derived progress for a single goal, always present on a Goal response. */
+export interface GoalProgress {
+  targetAmount: number;
+  currentAmount: number;
+  remainingAmount: number;
+  percentageComplete: number;
+  status: GoalStatus;
+  estimatedCompletionDate?: string | null;
+}
+
+export interface Goal {
+  id: string;
+  name: string;
+  description?: string | null;
+  type: GoalType;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate: string;
+  active: boolean;
+  paused: boolean;
+  createdAt: string;
+  updatedAt: string;
+  progress: GoalProgress;
+}
+
+export interface GoalContribution {
+  id: string;
+  amount: number;
+  note?: string | null;
+  contributedAt: string;
+}
+
+export interface GoalDetail {
+  goal: Goal;
+  contributions: GoalContribution[];
+}
+
+export interface GoalWithProgress {
+  goal: Goal;
+  progress: GoalProgress;
+}
+
+/** Rolled-up goal health for the dashboard widgets. */
+export interface GoalSummary {
+  totalGoals: number;
+  activeGoals: number;
+  achievedGoals: number;
+  pausedGoals: number;
+  overdueGoals: number;
+  totalTarget: number;
+  totalCurrent: number;
+  totalRemaining: number;
+  overallPercent: number;
+  currency: string;
+  goals: GoalWithProgress[];
+}
+
+export interface CreateGoalPayload {
+  name: string;
+  type: GoalType;
+  targetAmount: number;
+  targetDate: string;
+  currentAmount?: number;
+  description?: string;
+}
+
+export interface UpdateGoalPayload {
+  name?: string;
+  type?: GoalType;
+  targetAmount?: number;
+  targetDate?: string;
+  currentAmount?: number;
+  description?: string;
+  paused?: boolean;
+  active?: boolean;
+}
+
+export interface AddGoalContributionPayload {
+  amount: number;
+  note?: string;
+  contributedAt?: string;
+}

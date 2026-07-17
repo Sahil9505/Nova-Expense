@@ -2,9 +2,9 @@
 
 **Nova** is a premium personal finance platform focused on expense tracking, budgeting, financial insights, and a polished fintech dashboard experience.
 
-The repository has grown through four phases on a clean, production-grade monorepo: the **Phase 1** foundation (backend, frontend, design system, migrations, standards), **Phase 2** authentication and user management, **Phase 3 — Core Finance** (full CRUD for accounts, categories, and transactions plus a live dashboard), and the current **Phase 4A — Budget Foundation**, which adds a complete budgets module (backend CRUD, validation, and a native Budgets UI).
+The repository has grown through five phases on a clean, production-grade monorepo: the **Phase 1** foundation (backend, frontend, design system, migrations, standards), **Phase 2** authentication and user management, **Phase 3 — Core Finance** (full CRUD for accounts, categories, and transactions plus a live dashboard), **Phase 4A — Budget Foundation** (complete budgets module), **Phase 4B — Budget Intelligence** (progress, remaining, and health analytics), and the current **Phase 4C — Financial Goals**, which adds a first-class goals domain alongside budgets.
 
-> Phase 4A is functional end to end: create, edit, and delete budgets scoped to a category or your overall spending, with active/inactive lifecycle, period-based limits, and the same design and data patterns as the rest of Nova.
+> Phase 4C is functional end to end: define long-term savings, debt-payoff, or custom goals; log contributions that maintain a running total; track derived progress, status, and an estimated completion date; and see goals surfaced on the dashboard — all using the same design and data patterns as the rest of Nova.
 
 ---
 
@@ -240,6 +240,30 @@ moves between accounts).
 - `INCOME` / `EXPENSE` require an `accountId` and a matching `categoryId`.
 - `TRANSFER` requires a source `accountId` and a `destinationAccountId` (which must differ) and uses no category.
 
+**Budgets** — spending limits (`WEEKLY` / `MONTHLY` / `YEARLY` / `CUSTOM`) scoped to a category or overall spending.
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/budgets` | List budgets; optional `?active=true\|false` filter |
+| `POST` | `/api/budgets` | Create a budget |
+| `GET` | `/api/budgets/{id}` | Get one budget |
+| `PATCH` | `/api/budgets/{id}` | Update a budget (including reactivation) |
+| `DELETE` | `/api/budgets/{id}` | Deactivate a budget (history preserved) |
+| `GET` | `/api/budgets/summary` | Rolled-up budget health + per-budget metrics |
+| `GET` | `/api/budgets/{id}/metrics` | Live metrics for one budget |
+
+**Goals** — long-term objectives (`SAVINGS` / `DEBT_PAYOFF` / `CUSTOM`). Each goal maintains a running `currentAmount` updated by logged contributions; progress, status, and an estimated completion date are derived on read.
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/goals` | List goals; optional `?active=true\|false` filter |
+| `POST` | `/api/goals` | Create a goal (optionally seeded with `currentAmount`) |
+| `GET` | `/api/goals/{id}` | Get one goal with its contribution history |
+| `PATCH` | `/api/goals/{id}` | Update a goal (including `paused` / reactivation) |
+| `DELETE` | `/api/goals/{id}` | Deactivate a goal (history preserved) |
+| `POST` | `/api/goals/{id}/contributions` | Log a contribution and update the running total |
+| `GET` | `/api/goals/summary` | Rolled-up goal health + per-goal progress |
+
 **Dashboard**
 
 | Method | Endpoint | Description |
@@ -255,12 +279,14 @@ shell; unauthenticated visitors are redirected to `/login`.
 
 | Route | Description |
 | --- | --- |
-| `/` | Dashboard — live KPIs, cash flow chart, category breakdown, recent activity |
+| `/` | Dashboard — live KPIs, cash flow chart, category breakdown, recent activity, budget and goal widgets |
 | `/accounts` | Accounts list with create/edit and deactivate/reactivate |
 | `/categories` | Income and expense categories with create/edit/delete |
 | `/transactions` | Transactions list with type/account/category/date/search filters |
 | `/transactions/new` | Create a transaction |
 | `/transactions/:id/edit` | Edit an existing transaction |
+| `/budgets` | Budgets list with create/edit, active lifecycle, and progress |
+| `/goals` | Goals list with create/edit, contributions, and progress |
 | `/settings/profile` | Profile and password management |
 
 Public routes: `/login`, `/register`, `/forgot-password`.
@@ -297,7 +323,8 @@ The quick start above does not use Docker. See `docs/DEVELOPMENT.md` for details
 - **Phase 2** — Authentication & User Management (JWT access/refresh tokens, registration, login, profile, password change, role foundation) — *complete*
 - **Phase 3** — Core Finance: accounts, categories, and transactions CRUD with automatic balance keeping and a live dashboard summary — *complete*
 - **Phase 4A** — Budget Foundation: complete budget CRUD, validation, ownership, and a native Budgets UI — *complete*
-- **Phase 4B** — Budget progress, remaining calculations, and analytics — *planned*
+- **Phase 4B** — Budget Intelligence: progress, remaining, and health analytics over a reusable calculation engine — *complete*
+- **Phase 4C** — Financial Goals: goal domain, contributions, derived progress, dashboard widgets, and a native Goals UI — *complete* (this release)
 - **Phase 5** — Financial insights and receipt intelligence
 
 See `docs/NOVA_ARCHITECTURE_BIBLE.md` for the full vision, standards, and conventions.

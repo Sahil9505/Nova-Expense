@@ -14,12 +14,20 @@ import {
   RotateCcw,
   ShoppingBag,
   Tag,
+  Target,
+  TrendingDown,
   TrendingUp,
   Utensils,
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
-import type { AccountType, BudgetPeriod, CategoryType, TransactionType } from '@/types';
+import type {
+  AccountType,
+  BudgetPeriod,
+  CategoryType,
+  GoalType,
+  TransactionType,
+} from '@/types';
 
 /** Human-readable labels for account types, shown in forms and tables. */
 export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
@@ -175,4 +183,76 @@ export function dateInputToIso(date: string): string {
 /** Extracts the YYYY-MM-DD portion of an ISO timestamp for a date input. */
 export function isoToDateInput(iso: string): string {
   return iso.slice(0, 10);
+}
+
+// ---------------------------------------------------------------------------
+// Goal helpers (Phase 4C)
+// ---------------------------------------------------------------------------
+
+/** Human-readable labels for goal types, shown in forms and goal cards. */
+export const GOAL_TYPE_LABELS: Record<GoalType, string> = {
+  SAVINGS: 'Savings',
+  DEBT_PAYOFF: 'Debt Payoff',
+  CUSTOM: 'Custom',
+};
+
+export const GOAL_TYPE_OPTIONS = (
+  Object.keys(GOAL_TYPE_LABELS) as GoalType[]
+).map((value) => ({ value, label: GOAL_TYPE_LABELS[value] }));
+
+/** Maps a goal type to its icon. */
+export const GOAL_TYPE_ICONS: Record<GoalType, LucideIcon> = {
+  SAVINGS: PiggyBank,
+  DEBT_PAYOFF: TrendingDown,
+  CUSTOM: Target,
+};
+
+export function goalTypeIcon(type: GoalType): LucideIcon {
+  return GOAL_TYPE_ICONS[type] ?? Target;
+}
+
+/** Short, human label for a goal's derived status. */
+export const GOAL_STATUS_LABELS: Record<string, string> = {
+  NOT_STARTED: 'Not started',
+  IN_PROGRESS: 'In progress',
+  ACHIEVED: 'Achieved',
+  OVERDUE: 'Overdue',
+  PAUSED: 'Paused',
+};
+
+/** Maps a goal's derived status to the badge variant matching the status palette. */
+export function goalStatusBadgeVariant(
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'ACHIEVED' | 'OVERDUE' | 'PAUSED',
+): 'success' | 'warning' | 'danger' | 'outline' | 'primary' {
+  switch (status) {
+    case 'ACHIEVED':
+      return 'success';
+    case 'OVERDUE':
+      return 'danger';
+    case 'PAUSED':
+      return 'outline';
+    case 'IN_PROGRESS':
+      return 'primary';
+    case 'NOT_STARTED':
+    default:
+      return 'outline';
+  }
+}
+
+/** Maps a goal's derived status to the progress-fill tone. */
+export function goalStatusTone(
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'ACHIEVED' | 'OVERDUE' | 'PAUSED',
+): 'success' | 'warning' | 'danger' | 'primary' {
+  switch (status) {
+    case 'ACHIEVED':
+      return 'success';
+    case 'OVERDUE':
+      return 'danger';
+    case 'IN_PROGRESS':
+      return 'primary';
+    case 'PAUSED':
+    case 'NOT_STARTED':
+    default:
+      return 'primary';
+  }
 }
