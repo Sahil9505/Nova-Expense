@@ -79,6 +79,7 @@ export interface ApiFieldError {
 export type AccountType = 'CASH' | 'CHECKING' | 'SAVINGS' | 'CREDIT_CARD' | 'WALLET';
 export type CategoryType = 'INCOME' | 'EXPENSE';
 export type TransactionType = 'INCOME' | 'EXPENSE' | 'TRANSFER';
+export type BudgetPeriod = 'WEEKLY' | 'MONTHLY' | 'YEARLY' | 'CUSTOM';
 
 export interface Account {
   id: string;
@@ -219,4 +220,43 @@ export interface TransactionQuery {
   from?: string;
   to?: string;
   search?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Budget domain (Phase 4A)
+// ---------------------------------------------------------------------------
+
+export interface Budget {
+  id: string;
+  name: string;
+  description?: string | null;
+  amount: number;
+  period: BudgetPeriod;
+  category: CategoryRef | null;
+  active: boolean;
+  startDate: string;
+  endDate?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateBudgetPayload {
+  name: string;
+  amount: number;
+  period: BudgetPeriod;
+  categoryId?: string;
+  description?: string;
+  startDate: string;
+  endDate?: string;
+}
+
+export interface UpdateBudgetPayload {
+  name?: string;
+  amount?: number;
+  period?: BudgetPeriod;
+  categoryId?: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  active?: boolean;
 }

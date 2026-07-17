@@ -93,9 +93,11 @@ with transactions by the transaction service.
 | `category_id` | `uuid` FK → `categories` | `ON DELETE SET NULL` |
 | `name` | `varchar(120)` | not null |
 | `amount` | `numeric(18,4)` | not null |
-| `period` | `varchar(16)` | not null (DAILY/WEEKLY/MONTHLY/...) |
+| `period` | `varchar(16)` | not null (WEEKLY/MONTHLY/YEARLY/CUSTOM) |
+| `description` | `varchar(255)` | nullable |
+| `is_active` | `boolean` | not null, default `true` |
 | `start_date` | `date` | not null |
-| `end_date` | `date` | nullable |
+| `end_date` | `date` | nullable (required for CUSTOM) |
 | `created_at` / `updated_at` | `timestamptz` | audit |
 
 ---
@@ -113,6 +115,7 @@ with transactions by the transaction service.
 - `idx_transactions_destination_account_id`
 - `idx_transactions_occurred_at`
 - `idx_budgets_user_id`
+- `idx_budgets_active` (Phase 4A: V4)
 
 ---
 

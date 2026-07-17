@@ -19,7 +19,7 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
-import type { AccountType, CategoryType, TransactionType } from '@/types';
+import type { AccountType, BudgetPeriod, CategoryType, TransactionType } from '@/types';
 
 /** Human-readable labels for account types, shown in forms and tables. */
 export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
@@ -104,6 +104,18 @@ export const CATEGORY_TYPE_LABELS: Record<CategoryType, string> = {
   INCOME: 'Income',
   EXPENSE: 'Expense',
 };
+
+/** Human-readable labels for budget periods, shown in forms and budget cards. */
+export const BUDGET_PERIOD_LABELS: Record<BudgetPeriod, string> = {
+  WEEKLY: 'Weekly',
+  MONTHLY: 'Monthly',
+  YEARLY: 'Yearly',
+  CUSTOM: 'Custom',
+};
+
+export const BUDGET_PERIOD_OPTIONS = (
+  Object.keys(BUDGET_PERIOD_LABELS) as BudgetPeriod[]
+).map((value) => ({ value, label: BUDGET_PERIOD_LABELS[value] }));
 
 /** A neutral fallback color for categories/accounts without one. */
 export const FALLBACK_COLOR = '#94A3B8';

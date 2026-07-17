@@ -3,6 +3,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Dashboard } from '@/pages/Dashboard';
 import { Accounts } from '@/pages/Accounts';
 import { Categories } from '@/pages/Categories';
+import { Budgets } from '@/pages/Budgets';
 import { Transactions } from '@/pages/Transactions';
 import { TransactionFormPage } from '@/pages/TransactionFormPage';
 import { Login } from '@/pages/Login';
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Dashboard /> },
       { path: 'accounts', element: <Accounts /> },
       { path: 'categories', element: <Categories /> },
+      { path: 'budgets', element: <Budgets /> },
       { path: 'transactions', element: <Transactions /> },
       { path: 'transactions/new', element: <TransactionFormPage /> },
       { path: 'transactions/:id/edit', element: <TransactionFormPage /> },

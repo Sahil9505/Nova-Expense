@@ -2,9 +2,9 @@
 
 **Nova** is a premium personal finance platform focused on expense tracking, budgeting, financial insights, and a polished fintech dashboard experience.
 
-The repository has grown through three phases on a clean, production-grade monorepo: the **Phase 1** foundation (backend, frontend, design system, migrations, standards), **Phase 2** authentication and user management, and the current **Phase 3 — Core Finance**, which adds full CRUD for accounts, categories, and transactions plus a live, backend-driven dashboard.
+The repository has grown through four phases on a clean, production-grade monorepo: the **Phase 1** foundation (backend, frontend, design system, migrations, standards), **Phase 2** authentication and user management, **Phase 3 — Core Finance** (full CRUD for accounts, categories, and transactions plus a live dashboard), and the current **Phase 4A — Budget Foundation**, which adds a complete budgets module (backend CRUD, validation, and a native Budgets UI).
 
-> Phase 3 is functional end to end: create accounts, organize categories, record income/expense/transfer transactions with automatic balance updates, and view a dashboard computed entirely from your own data.
+> Phase 4A is functional end to end: create, edit, and delete budgets scoped to a category or your overall spending, with active/inactive lifecycle, period-based limits, and the same design and data patterns as the rest of Nova.
 
 ---
 
@@ -296,7 +296,8 @@ The quick start above does not use Docker. See `docs/DEVELOPMENT.md` for details
 
 - **Phase 2** — Authentication & User Management (JWT access/refresh tokens, registration, login, profile, password change, role foundation) — *complete*
 - **Phase 3** — Core Finance: accounts, categories, and transactions CRUD with automatic balance keeping and a live dashboard summary — *complete*
-- **Phase 4** — Budgets and analytics
+- **Phase 4A** — Budget Foundation: complete budget CRUD, validation, ownership, and a native Budgets UI — *complete*
+- **Phase 4B** — Budget progress, remaining calculations, and analytics — *planned*
 - **Phase 5** — Financial insights and receipt intelligence
 
 See `docs/NOVA_ARCHITECTURE_BIBLE.md` for the full vision, standards, and conventions.

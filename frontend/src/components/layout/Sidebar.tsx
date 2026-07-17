@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
   { label: 'Transactions', icon: Receipt, to: '/transactions' },
   { label: 'Accounts', icon: CreditCard, to: '/accounts' },
   { label: 'Categories', icon: PieChart, to: '/categories' },
-  { label: 'Budgets', icon: Wallet, soon: true },
+  { label: 'Budgets', icon: Wallet, to: '/budgets' },
   { label: 'Analytics', icon: BarChart3, soon: true },
   { label: 'Profile', icon: Settings, to: '/settings/profile' },
 ];
@@ -94,7 +94,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
       <div className="rounded-md bg-surface-2 px-3 py-3 text-xs text-muted-foreground">
         <p className="font-medium text-foreground">Nova Finance</p>
-        <p>Phase 3 · v0.3.0</p>
+        <p>Phase 4A · v0.4.0</p>
       </div>
     </div>
   );

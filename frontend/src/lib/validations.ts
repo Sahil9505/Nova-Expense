@@ -163,3 +163,52 @@ export const transactionSchema = z
   });
 
 export type TransactionValues = z.infer<typeof transactionSchema>;
+
+// ---------------------------------------------------------------------------
+// Budget validation (Phase 4A)
+// ---------------------------------------------------------------------------
+
+export const BUDGET_PERIODS = ['WEEKLY', 'MONTHLY', 'YEARLY', 'CUSTOM'] as const;
+
+const budgetBaseSchema = z.object({
+  name: z.string().trim().min(1, 'Budget name is required').max(120, 'Name is too long'),
+  amount: z.coerce
+    .number({ invalid_type_error: 'Amount is required' })
+    .positive('Amount must be greater than zero'),
+  period: z.enum(BUDGET_PERIODS),
+  categoryId: z.string().optional().or(z.literal('')),
+  description: z.string().trim().max(255, 'Description is too long').optional().or(z.literal('')),
+  startDate: z.string().min(1, 'Start date is required'),
+  endDate: z.string().optional().or(z.literal('')),
+});
+
+/** Enforces period-aware date rules for both create and update payloads. */
+function refineBudgetDates(
+  value: { period?: string; startDate?: string; endDate?: string },
+  ctx: z.RefinementCtx,
+) {
+  if (value.period !== 'CUSTOM') {
+    if (value.startDate && value.endDate && value.endDate < value.startDate) {
+      ctx.addIssue({ code: 'custom', path: ['endDate'], message: 'End date cannot be before the start date' });
+    }
+    return;
+  }
+  if (!value.startDate) {
+    ctx.addIssue({ code: 'custom', path: ['startDate'], message: 'Start date is required' });
+  }
+  if (!value.endDate) {
+    ctx.addIssue({ code: 'custom', path: ['endDate'], message: 'End date is required for custom budgets' });
+  }
+  if (value.startDate && value.endDate && value.endDate < value.startDate) {
+    ctx.addIssue({ code: 'custom', path: ['endDate'], message: 'End date cannot be before the start date' });
+  }
+}
+
+export const budgetSchema = budgetBaseSchema.superRefine(refineBudgetDates);
+
+export type BudgetValues = z.infer<typeof budgetSchema>;
+
+export const budgetUpdateSchema = budgetBaseSchema.partial().superRefine(refineBudgetDates);
+
+export type BudgetUpdateValues = z.infer<typeof budgetUpdateSchema>;
+
