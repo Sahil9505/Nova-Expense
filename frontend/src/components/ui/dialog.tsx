@@ -36,7 +36,7 @@ export function Dialog({ open, onClose, title, description, children, footer, cl
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -46,7 +46,7 @@ export function Dialog({ open, onClose, title, description, children, footer, cl
         >
           <motion.div
             className={cn(
-              'flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border border-border bg-surface shadow-card sm:max-w-lg sm:rounded-xl',
+              'flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl glass-strong sm:max-w-lg sm:rounded-xl',
               className,
             )}
             initial={{ y: 24, opacity: 0, scale: 0.98 }}
@@ -69,7 +69,7 @@ export function Dialog({ open, onClose, title, description, children, footer, cl
                 type="button"
                 onClick={onClose}
                 aria-label="Close dialog"
-                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>

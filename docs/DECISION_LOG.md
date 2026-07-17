@@ -373,3 +373,74 @@ rationale.
 - **Impact:** Four requested dashboard slices (Goal Summary, Goal Progress, Upcoming
   Deadlines, Recently Completed) are covered by the summary header + three filtered
   widget instances.
+
+---
+
+## Phase 4D — Premium UI & Design System Refinement
+
+### D-4D-1 — Atmospheric background is pure CSS, fixed, and theme-token-driven
+
+- **Date:** 2026-07-18
+- **Decision:** The application background is a single fixed, `position: fixed; z-index: -1`
+  layer (`components/layout/Atmosphere.tsx` + the `.nova-bg` styles in `index.css`)
+  rendered once at the app root. It has four non-interactive layers — a deep navy base
+  radial gradient, three large radial-gradient glow blobs (blue/purple/cyan) that drift
+  on 24–30s transforms, and a vignette. All colors come from CSS variables
+  (`--atm-base-*`, `--glow-*`, `--glow-opacity`, `--vignette`) defined per theme.
+- **Reason:** The spec requires a premium, cloudy-cosmos atmosphere with zero image or
+  video assets and no readability cost. A fixed CSS layer (not a per-component
+  background) guarantees one consistent backdrop across every route, is cheap to paint
+  (gradient falloff, no `filter: blur` on animated elements), and is trivially
+  theme-aware via variables.
+- **Alternatives considered:**
+  1. Per-page `background` utility classes (the old `app-surface-grid`).
+  2. Animated `filter: blur()` glows.
+  3. A `<canvas>`/WebGL starfield.
+- **Why alternatives were rejected:** (1) scatters the background across components and
+  can't sit behind a transparent shell uniformly; (2) animating a blurred element
+  re-rasterizes the filter every frame — a real cost on the dashboard's many surfaces;
+  (3) heavy, off-brief (gaming aesthetic), and a maintenance/perf risk. The radial
+  gradient soft falloff reads as "blurred" for free.
+- **Impact:** `body` is transparent with an `html` fallback color so there is never a
+  white flash; the app containers (AppLayout, AuthLayout, ScreenLoader) are transparent;
+  reduced-motion users get a static backdrop.
+
+### D-4D-2 — One reusable glass surface system, tokenized
+
+- **Date:** 2026-07-18
+- **Decision:** `Card`/`StatCard`/`ChartCard` use `.glass`; `Dialog`/`Toast` use
+  `.glass-strong`; the `Sidebar` and auth brand panel use `.glass`. The look
+  (fill alpha, blur radius, border color/alpha, layered shadow) is defined once as
+  `--glass-*` / `--glass-strong-*` variables and mirrored into Tailwind
+  (`boxShadow.glass`, `boxShadow['glass-strong']`, `backdropBlur.glass`, glow shadows,
+  `transitionTimingFunction.premium`). Future phases consume these tokens.
+- **Reason:** The spec asks for a single premium glass language and for tokens future
+  phases must reuse. Centralizing into two classes + a small set of variables keeps
+  every surface consistent and lets a single change restyle the whole app.
+- **Alternatives considered:**
+  1. Tweak each component's Tailwind classes independently.
+  2. A `glass` utility only, re-applied ad hoc.
+- **Why alternatives were rejected:** (1) drift and inconsistency (exactly what the spec
+  warns against); (2) no token story and duplicate blur/shadow literals everywhere.
+- **Impact:** Surfaces that already compose `Card`/`Dialog`/`Toast` (dashboard, budgets,
+  goals, transactions, accounts, categories, profile, all form dialogs) inherit the glass
+  treatment automatically with no per-page edits.
+
+### D-4D-3 — Charts keep Recharts; only tooltip/legend/grid are refined
+
+- **Date:** 2026-07-18
+- **Decision:** No new charting library is introduced. A reusable `ChartTooltip`
+  (glass-styled) and `ChartLegend` (compact inline) in `components/ui/chart-tooltip.tsx`
+  replace Recharts' flat default tooltip via the existing `<Tooltip content=…>` prop.
+  Dashboard charts also get a softer grid, a dashed hover cursor, glowing active dots,
+  and an inline legend — all standard Recharts props.
+- **Reason:** The spec explicitly forbids a new charting library and any chart redesign;
+  it asks only for tooltip/grid/legend/hover polish. Reusing `content` keeps the data and
+  layout untouched while lifting the visual quality.
+- **Alternatives considered:**
+  1. Swap to a different chart library for "better" tooltips.
+  2. Hand-roll an SVG chart.
+- **Why alternatives were rejected:** Both violate the no-new-library and no-redesign
+  constraints and would ripple through the dashboard's data binding.
+- **Impact:** Charts remain Recharts-rendered and data-driven; only presentation improved.
+

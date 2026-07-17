@@ -39,9 +39,9 @@ export function Sidebar({ onNavigate }: SidebarProps) {
   const { toast } = useToast();
 
   return (
-    <div className="flex h-full flex-col gap-2 bg-surface px-3 py-5">
-      <div className="mb-4 flex items-center gap-2 px-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-primary-foreground">
+    <div className="glass flex h-full flex-col gap-2 px-3 py-5">
+      <div className="mb-4 flex items-center gap-2.5 px-2">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-[0_6px_18px_-6px_rgb(var(--primary)/0.7)]">
           <span className="text-lg font-extrabold">N</span>
         </div>
         <div className="leading-tight">
@@ -60,15 +60,31 @@ export function Sidebar({ onNavigate }: SidebarProps) {
               onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ease-premium',
                   isActive
-                    ? 'bg-primary/15 text-primary'
-                    : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground',
+                    ? 'bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgb(var(--primary)/0.18)]'
+                    : 'text-muted-foreground hover:translate-x-0.5 hover:bg-surface-2/60 hover:text-foreground',
                 )
               }
             >
-              <item.icon className="h-5 w-5" aria-hidden="true" />
-              {item.label}
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span
+                      className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <item.icon
+                    className={cn(
+                      'h-5 w-5 shrink-0 transition-transform duration-200 ease-premium',
+                      !isActive && 'group-hover:scale-110',
+                    )}
+                    aria-hidden="true"
+                  />
+                  {item.label}
+                </>
+              )}
             </NavLink>
           ) : (
             <button
@@ -82,9 +98,9 @@ export function Sidebar({ onNavigate }: SidebarProps) {
                 });
                 onNavigate?.();
               }}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground/70 transition-colors hover:bg-surface-2"
+              className="group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground/70 transition-all duration-200 ease-premium hover:translate-x-0.5 hover:bg-surface-2/60 hover:text-foreground"
             >
-              <item.icon className="h-5 w-5" aria-hidden="true" />
+              <item.icon className="h-5 w-5 shrink-0 transition-transform duration-200 ease-premium group-hover:scale-110" aria-hidden="true" />
               {item.label}
               <Badge variant="outline" className="ml-auto">
                 Soon
@@ -94,9 +110,9 @@ export function Sidebar({ onNavigate }: SidebarProps) {
         )}
       </nav>
 
-      <div className="rounded-md bg-surface-2 px-3 py-3 text-xs text-muted-foreground">
+      <div className="rounded-xl border border-border/60 bg-surface-2/50 px-3 py-3 text-xs text-muted-foreground">
         <p className="font-medium text-foreground">Nova Finance</p>
-        <p>Phase 4C · v0.6.0</p>
+        <p>Phase 4D · v0.7.0</p>
       </div>
     </div>
   );

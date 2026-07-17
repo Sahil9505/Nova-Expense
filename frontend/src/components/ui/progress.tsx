@@ -22,14 +22,18 @@ const progressVariants = cva('relative w-full overflow-hidden rounded-full bg-su
 });
 
 const fillVariants = cva(
-  'h-full rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none',
+  'h-full rounded-full ring-1 ring-inset ring-white/10 transition-[width] duration-500 ease-premium motion-reduce:transition-none',
   {
     variants: {
       tone: {
-        primary: 'bg-primary',
-        success: 'bg-success',
-        warning: 'bg-warning',
-        danger: 'bg-danger',
+        primary:
+          'bg-gradient-to-r from-primary to-secondary shadow-[0_0_12px_-1px_rgb(var(--primary)/0.7)]',
+        success:
+          'bg-gradient-to-r from-success to-emerald-400 shadow-[0_0_12px_-1px_rgb(var(--success)/0.7)]',
+        warning:
+          'bg-gradient-to-r from-warning to-amber-300 shadow-[0_0_12px_-1px_rgb(var(--warning)/0.7)]',
+        danger:
+          'bg-gradient-to-r from-danger to-rose-400 shadow-[0_0_12px_-1px_rgb(var(--danger)/0.7)]',
       },
     },
     defaultVariants: {

@@ -3,6 +3,56 @@
 All notable changes to Nova are documented in this file. The format is based on
 keeping a clear record of Added, Improved, and Fixed work per release.
 
+## [0.7.0] — Phase 4D: Premium UI & Design System Refinement
+
+This phase is visual-only. No backend, API, business logic, or data-model changes
+were made; every workflow and route is preserved. The goal is a premium, calm,
+SaaS-grade interface built on the existing architecture.
+
+### Added
+- **Atmospheric CSS background.** A fixed, pure-CSS four-layer backdrop (deep navy
+  base gradient, three slow-drifting glow blobs — blue aurora / purple nebula / cyan
+  glow — and a soft vignette). No image assets, no video; fully GPU-friendly. Driven
+  by theme tokens so it adapts to light and dark.
+- **Glass surface system.** `Card`, `StatCard`, `ChartCard`, `Dialog`, `Toast`, the
+  `Sidebar`, and the auth brand panel now use a reusable `.glass` / `.glass-strong`
+  treatment (`backdrop-filter: blur`, translucent fill, subtle border, layered
+  shadow). The app shell is transparent so the atmosphere shows through.
+- **Centralized design tokens.** New CSS variables for the atmosphere palette, glass
+  colors/alpha/blur/border/shadow, and focus ring, plus Tailwind tokens for glow
+  colors, glass blur, premium easing, motion durations, and glow/card-hover shadows.
+  Future phases consume these tokens instead of hard-coded values.
+- **Custom chart tooltip + legend.** `components/ui/chart-tooltip.tsx` provides a
+  glass-styled `ChartTooltip` and a compact `ChartLegend`, replacing Recharts' flat
+  default tooltip. Dashboard charts adopt it.
+- **`success` button variant.** The `Button` primitive now standardizes six variants
+  (primary, secondary, outline, ghost, danger, success) with consistent radius,
+  easing, hover lift, shadows, and focus states.
+- **Reduced-motion support.** Ambient drift and non-essential motion respect
+  `prefers-reduced-motion`.
+
+### Improved
+- **Sidebar.** Glass panel that blends with the atmosphere, a refined active
+  indicator (accent bar + tinted pill + hover slide), icon hover scale, depth, and
+  spacing. Version marker advanced to Phase 4D (v0.7.0).
+- **Topbar.** Time-based greeting hierarchy ("Good morning/afternoon/evening"), a
+  profile block (name + email) beside the avatar, and standardized action buttons;
+  now a translucent glass bar.
+- **Stat cards.** Trend rendered as a soft pill, refined typography hierarchy, hover
+  lift with a primary glow, and improved spacing/whitespace.
+- **Forms.** Inputs and selects use a consistent radius, smoother transitions, refined
+  focus rings (border highlight + ring, no shape change on focus), and hover states.
+  Dark-mode date-picker indicators are lightened for visibility.
+- **Progress.** Gradient fill with a subtle glow and rounded ends; animation stays
+  reduced-motion aware.
+- **Charts.** Softer, lower-opacity grid; dashed hover cursor; glowing active dots;
+  inline legend; tighter tooltip styling — all within the existing Recharts library.
+- **Accessibility.** Global focus-visible ring no longer alters element shape on
+  focus; keyboard navigation and contrast preserved.
+
+### Fixed
+- None in this phase. (See `BUG_TRACKER.md` for carried-forward items.)
+
 ## [0.6.0] — Phase 4C: Financial Goals
 
 ### Added

@@ -20,9 +20,9 @@ const features = [
  */
 export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen">
       <section
-        className="app-surface-grid relative hidden w-1/2 flex-col justify-between overflow-hidden bg-surface p-10 xl:p-12 lg:flex"
+        className="glass relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-border p-10 xl:p-12 lg:flex"
         aria-hidden="true"
       >
         <div className="flex items-center gap-2">

@@ -15,9 +15,10 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 const selectClass =
-  'flex h-10 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground ' +
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 ' +
-  'focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50';
+  'flex h-10 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground shadow-sm ' +
+  'transition-all duration-200 ease-premium hover:border-foreground/20 ' +
+  'focus-visible:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ' +
+  'focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50';
 
 /**
  * Labeled native select styled to match Nova's inputs, for forms that need a

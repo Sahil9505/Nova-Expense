@@ -1,4 +1,3 @@
-import { type CSSProperties } from 'react';
 import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Receipt } from 'lucide-react';
 import {
   Area,
@@ -16,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartCard } from '@/components/ui/chart-card';
+import { ChartLegend, ChartTooltip } from '@/components/ui/chart-tooltip';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/loading-state';
 import { StatCard } from '@/components/ui/stat-card';
@@ -63,13 +63,6 @@ export function Dashboard() {
 
   const axisColor = theme === 'dark' ? '#94A3B8' : '#475569';
   const gridColor = theme === 'dark' ? '#334155' : '#E2E8F0';
-  const tooltipStyle: CSSProperties = {
-    backgroundColor: theme === 'dark' ? '#1E293B' : '#FFFFFF',
-    border: `1px solid ${gridColor}`,
-    borderRadius: '0.5rem',
-    color: theme === 'dark' ? '#F8FAFC' : '#0F172A',
-    fontSize: '12px',
-  };
 
   if (query.isLoading) {
     return (
@@ -178,9 +171,23 @@ export function Dashboard() {
       </section>
 
       <section aria-label="Trends" className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ChartCard title="Cash Flow" description="Income vs. expenses over time">
+        <ChartCard
+          title="Cash Flow"
+          description="Income vs. expenses over time"
+          action={
+            <ChartLegend
+              items={[
+                { label: 'Income', color: '#10B981' },
+                { label: 'Expenses', color: '#3B82F6' },
+              ]}
+            />
+          }
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={summary.monthlyTrend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+            <AreaChart
+              data={summary.monthlyTrend}
+              margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
+            >
               <defs>
                 <linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#10B981" stopOpacity={0.35} />
@@ -191,7 +198,7 @@ export function Dashboard() {
                   <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} strokeOpacity={0.6} vertical={false} />
               <XAxis dataKey="label" stroke={axisColor} tickLine={false} axisLine={false} fontSize={12} />
               <YAxis
                 stroke={axisColor}
@@ -201,13 +208,19 @@ export function Dashboard() {
                 width={48}
                 tickFormatter={(value) => formatCompact(Number(value))}
               />
-              <Tooltip contentStyle={tooltipStyle} formatter={(value) => formatCurrency(Number(value))} />
+              <Tooltip
+                cursor={{ stroke: gridColor, strokeWidth: 1, strokeDasharray: '4 4', fill: 'rgb(var(--primary) / 0.04)' }}
+                content={(props) => (
+                  <ChartTooltip {...props} valueFormatter={(value) => formatCurrency(value)} />
+                )}
+              />
               <Area
                 type="monotone"
                 dataKey="income"
                 name="Income"
                 stroke="#10B981"
                 strokeWidth={2}
+                activeDot={{ r: 4, strokeWidth: 1.5, stroke: '#fff', fill: '#10B981' }}
                 fill="url(#incomeFill)"
               />
               <Area
@@ -216,6 +229,7 @@ export function Dashboard() {
                 name="Expenses"
                 stroke="#3B82F6"
                 strokeWidth={2}
+                activeDot={{ r: 4, strokeWidth: 1.5, stroke: '#fff', fill: '#3B82F6' }}
                 fill="url(#expenseFill)"
               />
             </AreaChart>
@@ -245,7 +259,11 @@ export function Dashboard() {
                         <Cell key={entry.category} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={tooltipStyle} formatter={(value) => formatCurrency(Number(value))} />
+                    <Tooltip
+                      content={(props) => (
+                        <ChartTooltip {...props} valueFormatter={(value) => formatCurrency(value)} />
+                      )}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">

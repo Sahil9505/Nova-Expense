@@ -8,7 +8,7 @@ export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background app-surface-grid">
+    <div className="flex h-screen overflow-hidden">
       <aside className="hidden w-64 shrink-0 border-r border-border md:block" aria-label="Sidebar">
         <Sidebar />
       </aside>
@@ -28,7 +28,7 @@ export function AppLayout() {
         {mobileOpen && (
           <motion.aside
             key="mobile-drawer"
-            className="fixed inset-y-0 left-0 z-50 w-64 border-r border-border bg-surface md:hidden"
+            className="fixed inset-y-0 left-0 z-50 w-64 border-r border-border glass md:hidden"
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"

@@ -12,6 +12,13 @@ interface TopbarProps {
   onMenuClick: () => void;
 }
 
+function getGreeting(date: Date): string {
+  const hour = date.getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export function Topbar({ onMenuClick }: TopbarProps) {
   const { logout } = useAuth();
   const { data: user } = useCurrentUser();
@@ -24,11 +31,13 @@ export function Topbar({ onMenuClick }: TopbarProps) {
     navigate('/login', { replace: true });
   };
 
-  const displayName = user?.fullName ?? user?.email ?? 'Welcome';
+  const displayName = user?.fullName ?? user?.email ?? 'there';
+  const firstName = displayName.split(/\s+/)[0] || 'there';
+  const greeting = getGreeting(new Date());
   const initials = getInitials(user?.fullName, user?.email ?? '');
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border glass px-4 sm:px-6">
       <Button
         variant="ghost"
         size="icon"
@@ -40,7 +49,9 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       </Button>
 
       <div className="hidden min-w-0 flex-col sm:flex">
-        <h1 className="truncate text-sm font-semibold leading-tight">{displayName}</h1>
+        <h1 className="truncate text-base font-semibold leading-tight">
+          {greeting}, {firstName}
+        </h1>
         <p className="text-xs text-muted-foreground">Here's your financial overview</p>
       </div>
 
@@ -50,8 +61,14 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <Bell className="h-5 w-5" aria-hidden="true" />
         </Button>
         <ThemeToggle />
+        <div className="hidden items-center gap-2.5 lg:flex">
+          <div className="text-right leading-tight">
+            <p className="text-sm font-semibold">{displayName}</p>
+            <p className="max-w-[14rem] truncate text-xs text-muted-foreground">{user?.email}</p>
+          </div>
+        </div>
         <div
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-semibold text-primary-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-semibold text-primary-foreground ring-2 ring-white/10"
           aria-label={displayName}
           role="img"
         >

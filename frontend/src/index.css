@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* ---- Core surface tokens (light theme) ---- */
     --background: 248 250 252; /* #F8FAFC */
     --surface: 255 255 255; /* #FFFFFF */
     --surface-2: 241 245 249; /* #F1F5F9 */
@@ -18,9 +19,36 @@
     --success: 16 185 129; /* #10B981 */
     --warning: 245 158 11; /* #F59E0B */
     --danger: 239 68 68; /* #EF4444 */
+
+    /* ---- Atmospheric background palette (light) ---- */
+    --atm-base-1: 248 250 252; /* fallback / deepest */
+    --atm-base-2: 244 247 251;
+    --atm-base-3: 237 242 248;
+    --glow-blue: 59 130 246;
+    --glow-purple: 167 139 250;
+    --glow-cyan: 56 189 248;
+    --glow-opacity: 0.16;
+    --vignette: rgba(15, 23, 42, 0.10);
+
+    /* ---- Glass surface system (light) ---- */
+    --glass-bg: 255 255 255;
+    --glass-alpha: 0.72;
+    --glass-blur: 18px;
+    --glass-border: rgba(15, 23, 42, 0.10);
+    --glass-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.7) inset,
+      0 12px 32px -18px rgba(15, 23, 42, 0.22);
+    --glass-strong-bg: 255 255 255;
+    --glass-strong-alpha: 0.94;
+    --glass-strong-border: rgba(15, 23, 42, 0.12);
+    --glass-strong-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.8) inset,
+      0 24px 60px -24px rgba(15, 23, 42, 0.35);
+
+    /* ---- Focus ring ---- */
+    --ring: 59 130 246;
   }
 
   .dark {
+    /* ---- Core surface tokens (dark theme) ---- */
     --background: 15 23 42; /* #0F172A */
     --surface: 30 41 59; /* #1E293B */
     --surface-2: 51 65 85; /* #334155 */
@@ -35,6 +63,32 @@
     --success: 16 185 129;
     --warning: 245 158 11;
     --danger: 239 68 68;
+
+    /* ---- Atmospheric background palette (deep navy cosmos) ---- */
+    --atm-base-1: 6 11 23; /* #060B17 */
+    --atm-base-2: 11 18 32; /* #0B1220 */
+    --atm-base-3: 16 24 39; /* #101827 */
+    --glow-blue: 59 130 246;
+    --glow-purple: 139 92 246;
+    --glow-cyan: 56 189 248;
+    --glow-opacity: 0.22;
+    --vignette: rgba(2, 6, 23, 0.45);
+
+    /* ---- Glass surface system (dark) ---- */
+    --glass-bg: 18 24 38; /* #121826 */
+    --glass-alpha: 0.72;
+    --glass-blur: 22px;
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+      0 14px 38px -16px rgba(2, 6, 23, 0.72), 0 2px 8px -4px rgba(2, 6, 23, 0.5);
+    --glass-strong-bg: 17 23 37;
+    --glass-strong-alpha: 0.9;
+    --glass-strong-border: rgba(255, 255, 255, 0.1);
+    --glass-strong-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.07) inset,
+      0 30px 70px -28px rgba(2, 6, 23, 0.85);
+
+    /* ---- Focus ring ---- */
+    --ring: 96 165 250;
   }
 
   * {
@@ -44,12 +98,16 @@
   html {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* Ultimate fallback so there is never a white flash before the atmosphere paints. */
+    background-color: rgb(var(--atm-base-1));
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply text-foreground font-sans;
     font-feature-settings: 'cv11', 'ss01';
     min-height: 100vh;
+    /* Transparent so the fixed atmospheric background shows through. */
+    background-color: transparent;
   }
 
   /* Refined, theme-aware scrollbars */
@@ -59,6 +117,11 @@
   }
   ::-webkit-scrollbar-thumb {
     @apply bg-border rounded-full;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--muted) / 0.7);
   }
   ::-webkit-scrollbar-track {
     background: transparent;
@@ -67,16 +130,198 @@
   :focus-visible {
     @apply outline-none ring-2 ring-primary/70 ring-offset-2 ring-offset-background;
   }
+
+  /* Date pickers: lighten the native indicator so it reads on dark surfaces. */
+  .dark input[type='date']::-webkit-calendar-picker-indicator,
+  .dark input[type='datetime-local']::-webkit-calendar-picker-indicator {
+    filter: invert(0.82);
+    cursor: pointer;
+  }
+
+  ::selection {
+    background-color: rgb(var(--primary) / 0.28);
+  }
 }
 
 @layer components {
+  /* Brand gradient text used for the Nova wordmark / accents. */
   .nova-gradient-text {
     @apply bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent;
   }
 
-  .app-surface-grid {
-    background-image:
-      radial-gradient(60rem 60rem at 85% -10%, rgb(var(--primary) / 0.12), transparent 60%),
-      radial-gradient(50rem 50rem at -10% 10%, rgb(var(--accent) / 0.1), transparent 55%);
+  /* ----------------------------------------------------------------------
+   * Atmospheric background — pure CSS, multi-layer, GPU-friendly.
+   * Rendered once as a fixed layer (see Atmosphere component) behind the app.
+   * -------------------------------------------------------------------- */
+  .nova-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .nova-bg__base {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      130% 130% at 50% -10%,
+      rgb(var(--atm-base-3)) 0%,
+      rgb(var(--atm-base-2)) 45%,
+      rgb(var(--atm-base-1)) 100%
+    );
+  }
+
+  .nova-bg__glow {
+    position: absolute;
+    width: 62vmax;
+    height: 62vmax;
+    border-radius: 9999px;
+    opacity: var(--glow-opacity);
+    will-change: transform;
+    /* Soft gradient falloff reads as a blurred blob without an expensive filter. */
+    background: radial-gradient(circle at center, rgb(var(--glow-color)) 0%, transparent 62%);
+  }
+
+  .nova-bg__glow--blue {
+    --glow-color: var(--glow-blue);
+    top: -22vmax;
+    right: -12vmax;
+    animation: nova-aurora-1 26s ease-in-out infinite;
+  }
+
+  .nova-bg__glow--purple {
+    --glow-color: var(--glow-purple);
+    bottom: -26vmax;
+    left: -16vmax;
+    animation: nova-aurora-2 30s ease-in-out infinite;
+  }
+
+  .nova-bg__glow--cyan {
+    --glow-color: var(--glow-cyan);
+    top: 28%;
+    left: 38%;
+    opacity: calc(var(--glow-opacity) * 0.75);
+    animation: nova-aurora-3 24s ease-in-out infinite;
+  }
+
+  .nova-bg__vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120% 120% at 50% 50%, transparent 55%, var(--vignette) 100%);
+  }
+
+  /* ----------------------------------------------------------------------
+   * Glass surface system — refined, readable, premium.
+   * `.glass` for cards/panels; `.glass-strong` for modals/toasts.
+   * -------------------------------------------------------------------- */
+  .glass {
+    background-color: rgb(var(--glass-bg) / var(--glass-alpha));
+    backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-strong {
+    background-color: rgb(var(--glass-strong-bg) / var(--glass-strong-alpha));
+    backdrop-filter: blur(calc(var(--glass-blur) + 4px)) saturate(150%);
+    -webkit-backdrop-filter: blur(calc(var(--glass-blur) + 4px)) saturate(150%);
+    border: 1px solid var(--glass-strong-border);
+    box-shadow: var(--glass-strong-shadow);
+  }
+
+  /* Subtle interactive lift for cards that respond to hover. */
+  .glass-lift {
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease;
+  }
+  .glass-lift:hover {
+    transform: translateY(-2px);
+    border-color: rgb(var(--primary) / 0.22);
+    box-shadow: var(--glass-shadow), 0 18px 44px -20px rgb(var(--primary) / 0.45);
+  }
+
+  /* Eyebrow label used for section/section-header accents. */
+  .nova-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground;
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * Keyframes for the atmospheric drift + tasteful UI motion.
+ * ------------------------------------------------------------------------ */
+@keyframes nova-aurora-1 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3%, 4%, 0) scale(1.1);
+  }
+}
+
+@keyframes nova-aurora-2 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-4%, -3%, 0) scale(1.12);
+  }
+}
+
+@keyframes nova-aurora-3 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(5%, -4%, 0) scale(1.08);
+  }
+}
+
+@keyframes nova-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes nova-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes nova-pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Respect users who prefer reduced motion: stop the ambient drift and
+ * any non-essential autoplay animation. Hover/transition feedback stays. */
+@media (prefers-reduced-motion: reduce) {
+  .nova-bg__glow {
+    animation: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
   }
 }

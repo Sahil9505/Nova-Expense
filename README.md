@@ -2,7 +2,7 @@
 
 **Nova** is a premium personal finance platform focused on expense tracking, budgeting, financial insights, and a polished fintech dashboard experience.
 
-The repository has grown through five phases on a clean, production-grade monorepo: the **Phase 1** foundation (backend, frontend, design system, migrations, standards), **Phase 2** authentication and user management, **Phase 3 — Core Finance** (full CRUD for accounts, categories, and transactions plus a live dashboard), **Phase 4A — Budget Foundation** (complete budgets module), **Phase 4B — Budget Intelligence** (progress, remaining, and health analytics), and the current **Phase 4C — Financial Goals**, which adds a first-class goals domain alongside budgets.
+The repository has grown through six phases on a clean, production-grade monorepo: the **Phase 1** foundation (backend, frontend, design system, migrations, standards), **Phase 2** authentication and user management, **Phase 3 — Core Finance** (full CRUD for accounts, categories, and transactions plus a live dashboard), **Phase 4A — Budget Foundation** (complete budgets module), **Phase 4B — Budget Intelligence** (progress, remaining, and health analytics), **Phase 4C — Financial Goals** (a first-class goals domain alongside budgets), and the current **Phase 4D — Premium UI & Design System Refinement**, a visual-only polish pass that adds an atmospheric CSS background, a glass surface system, and centralized design tokens without changing any workflow.
 
 > Phase 4C is functional end to end: define long-term savings, debt-payoff, or custom goals; log contributions that maintain a running total; track derived progress, status, and an estimated completion date; and see goals surfaced on the dashboard — all using the same design and data patterns as the rest of Nova.
 
@@ -324,7 +324,8 @@ The quick start above does not use Docker. See `docs/DEVELOPMENT.md` for details
 - **Phase 3** — Core Finance: accounts, categories, and transactions CRUD with automatic balance keeping and a live dashboard summary — *complete*
 - **Phase 4A** — Budget Foundation: complete budget CRUD, validation, ownership, and a native Budgets UI — *complete*
 - **Phase 4B** — Budget Intelligence: progress, remaining, and health analytics over a reusable calculation engine — *complete*
-- **Phase 4C** — Financial Goals: goal domain, contributions, derived progress, dashboard widgets, and a native Goals UI — *complete* (this release)
+- **Phase 4C** — Financial Goals: goal domain, contributions, derived progress, dashboard widgets, and a native Goals UI — *complete*
+- **Phase 4D** — Premium UI & Design System Refinement: atmospheric CSS background, glass surface system, standardized buttons/forms/progress, refined charts, and centralized design tokens — *complete* (this release)
 - **Phase 5** — Financial insights and receipt intelligence
 
 See `docs/NOVA_ARCHITECTURE_BIBLE.md` for the full vision, standards, and conventions.

@@ -96,7 +96,7 @@ function Toaster({ toasts, onDismiss }: { toasts: ToastItem[]; onDismiss: (id: n
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, x: 24 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="pointer-events-auto flex items-start gap-3 rounded-lg border border-border bg-surface p-4 shadow-card"
+              className="pointer-events-auto flex items-start gap-3 rounded-xl glass-strong p-4"
             >
               <Icon className={cn('mt-0.5 h-5 w-5 shrink-0', className)} aria-hidden="true" />
               <div className="min-w-0 flex-1">
