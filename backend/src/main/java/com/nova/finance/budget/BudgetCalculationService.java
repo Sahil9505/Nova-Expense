@@ -65,12 +65,6 @@ public class BudgetCalculationService {
     }
 
     @Transactional(readOnly = true)
-    public BudgetSummaryResponse summary(UUID userId, LocalDate today) {
-        String currency = userRepository.findPreferredCurrencyById(userId);
-        return summary(userId, currency, today);
-    }
-
-    @Transactional(readOnly = true)
     public BudgetSummaryResponse summary(UUID userId, String currency, LocalDate today) {
         List<Budget> budgets = budgetRepository.findByUserIdOrderByCreatedAtDesc(userId);
         if (budgets.isEmpty()) {
