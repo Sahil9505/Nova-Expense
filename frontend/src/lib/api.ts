@@ -360,3 +360,22 @@ export const analyticsApi = {
     window.URL.revokeObjectURL(url);
   },
 };
+
+// ---------------------------------------------------------------------------
+// AI Financial Copilot API (Phase 7)
+// ---------------------------------------------------------------------------
+
+import type { CopilotChatRequest, CopilotChatResponse } from '@/types';
+
+export const copilotApi = {
+  /** Send a question and receive the assistant's grounded answer. */
+  chat: (payload: CopilotChatRequest) =>
+    api.post<CopilotChatResponse>('/api/copilot/chat', payload),
+  /** Example questions the UI can offer as chips. */
+  suggestions: () => api.get<string[]>('/api/copilot/suggestions'),
+  /** Clear a single thread (conversationId) or every thread when omitted. */
+  reset: (conversationId?: string) => {
+    const qs = conversationId ? `?conversationId=${encodeURIComponent(conversationId)}` : '';
+    return api.delete<void>(`/api/copilot/conversations${qs}`);
+  },
+};

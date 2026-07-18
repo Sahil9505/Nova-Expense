@@ -595,3 +595,47 @@ export interface FinalizeReceiptPayload {
   currency: string;
   occurredAt: string;
 }
+
+// ---------------------------------------------------------------------------
+// AI Financial Copilot (Phase 7)
+// ---------------------------------------------------------------------------
+
+/** A single turn in a copilot conversation. */
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  intent?: string | null;
+  /** True while the assistant message is still being generated. */
+  pending?: boolean;
+  /** True when this message represents an error/warning rather than an answer. */
+  error?: boolean;
+  timestamp?: string;
+  /** Structured figures the assistant grounded its answer on (assistant only). */
+  dataReference?: DataReference | null;
+  /** Follow-up prompts suggested by the assistant (assistant only). */
+  suggestions?: string[];
+}
+
+/** A render-ready summary of the figures the assistant used to answer. */
+export interface DataReference {
+  kind: string;
+  title: string;
+  facts: { label: string; value: string }[];
+  items: { label: string; value: string; hint?: string | null }[];
+}
+
+/** The copilot's answer to a question. */
+export interface CopilotChatResponse {
+  conversationId: string;
+  answer: string;
+  intent: string;
+  dataReference: DataReference | null;
+  suggestions: string[];
+}
+
+/** Request body for a copilot chat turn. */
+export interface CopilotChatRequest {
+  message: string;
+  conversationId?: string | null;
+}

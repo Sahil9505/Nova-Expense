@@ -3,6 +3,8 @@ import { Outlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Topbar } from '@/components/layout/Topbar';
+import { CopilotPanel } from '@/components/copilot/CopilotPanel';
+import { FloatingCopilotButton } from '@/components/copilot/FloatingCopilotButton';
 
 export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -50,6 +52,9 @@ export function AppLayout() {
           </div>
         </main>
       </div>
+
+      <FloatingCopilotButton />
+      <CopilotPanel />
     </div>
   );
 }

@@ -29,6 +29,7 @@ import { CategoryBreakdownWidget } from '@/components/finance/CategoryBreakdownW
 import { BudgetDistributionWidget } from '@/components/finance/BudgetDistributionWidget';
 import { GoalProgressSummaryWidget } from '@/components/finance/GoalProgressSummaryWidget';
 import { RecentReceiptsWidget } from '@/components/finance/RecentReceiptsWidget';
+import { CopilotDashboardWidget } from '@/components/copilot/CopilotDashboardWidget';
 import { useTheme } from '@/context/ThemeProvider';
 import { colorOf } from '@/lib/finance';
 import { formatCurrency, formatCompact } from '@/lib/utils';
@@ -380,6 +381,10 @@ export function Dashboard() {
           <RecentReceiptsWidget />
         </div>
         <CashFlowWidget title="This Month" description="A closer look at cash flow" />
+      </section>
+
+      <section aria-label="AI Copilot" className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <CopilotDashboardWidget />
       </section>
 
       <section aria-label="Budget and goal distribution" className="grid grid-cols-1 gap-4 lg:grid-cols-2">

@@ -10,6 +10,7 @@ import { TransactionFormPage } from '@/pages/TransactionFormPage';
 import { Analytics } from '@/pages/Analytics';
 import { Receipts } from '@/pages/Receipts';
 import { ReceiptReviewPage } from '@/pages/ReceiptReviewPage';
+import { Copilot } from '@/pages/Copilot';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { ForgotPassword } from '@/pages/ForgotPassword';
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
       { path: 'receipts', element: <Receipts /> },
       { path: 'receipts/:id', element: <ReceiptReviewPage /> },
       { path: 'analytics', element: <Analytics /> },
+      { path: 'copilot', element: <Copilot /> },
       { path: 'settings/profile', element: <Profile /> },
       { path: '*', element: <NotFound /> },
     ],

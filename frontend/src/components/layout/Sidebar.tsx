@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   PieChart,
   Settings,
+  Sparkles,
   Target,
   Wallet,
 } from 'lucide-react';
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { label: 'Budgets', icon: Wallet, to: '/budgets' },
   { label: 'Goals', icon: Target, to: '/goals' },
   { label: 'Analytics', icon: BarChart3, to: '/analytics' },
+  { label: 'Ask Nova AI', icon: Sparkles, to: '/copilot' },
   { label: 'Profile', icon: Settings, to: '/settings/profile' },
 ];
 
