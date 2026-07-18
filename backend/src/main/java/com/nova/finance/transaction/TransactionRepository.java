@@ -59,6 +59,34 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
     long countByCategoryId(UUID categoryId);
 
     /**
+     * Raw transaction rows within a window, projected (no entity hydration) for the
+     * Analytics aggregation layer. Returns rows of
+     * {@code { occurredAt, type, amount, categoryId, categoryName, color, icon }}.
+     *
+     * <p>Every Analytics section (cash-flow trend, category breakdown, spending overview)
+     * is derived from this single load — no per-section query, no N+1, and never a
+     * duplicate read within a request. {@code accountId} matches either the source or the
+     * destination account of a transfer; {@code categoryId} scopes to a single category.
+     * A null filter dimension means "no constraint", mirroring {@link TransactionFilter}.</p>
+     */
+    @Query("""
+            SELECT t.occurredAt, t.type, t.amount, c.id, c.name, c.color, c.icon
+            FROM Transaction t
+            LEFT JOIN t.category c
+            WHERE t.user.id = :userId
+              AND t.occurredAt >= :start
+              AND t.occurredAt < :end
+              AND (:accountId IS NULL OR t.account.id = :accountId OR t.destinationAccount.id = :accountId)
+              AND (:categoryId IS NULL OR c.id = :categoryId)
+            ORDER BY t.occurredAt ASC
+            """)
+    List<Object[]> loadAnalyticsRows(@Param("userId") UUID userId,
+                                     @Param("start") OffsetDateTime start,
+                                     @Param("end") OffsetDateTime end,
+                                     @Param("accountId") UUID accountId,
+                                     @Param("categoryId") UUID categoryId);
+
+    /**
      * Raw expense rows within a window, for in-memory budget aggregation. Returns
      * rows of { categoryId, amount, occurredAt } so the caller can bucket a single
      * load across many budgets (each with its own sub-window and category scope) without

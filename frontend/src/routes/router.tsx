@@ -7,6 +7,7 @@ import { Budgets } from '@/pages/Budgets';
 import { Goals } from '@/pages/Goals';
 import { Transactions } from '@/pages/Transactions';
 import { TransactionFormPage } from '@/pages/TransactionFormPage';
+import { Analytics } from '@/pages/Analytics';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { ForgotPassword } from '@/pages/ForgotPassword';
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
       { path: 'transactions', element: <Transactions /> },
       { path: 'transactions/new', element: <TransactionFormPage /> },
       { path: 'transactions/:id/edit', element: <TransactionFormPage /> },
+      { path: 'analytics', element: <Analytics /> },
       { path: 'settings/profile', element: <Profile /> },
       { path: '*', element: <NotFound /> },
     ],

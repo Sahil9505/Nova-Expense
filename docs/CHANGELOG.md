@@ -3,6 +3,46 @@
 All notable changes to Nova are documented in this file. The format is based on
 keeping a clear record of Added, Improved, and Fixed work per release.
 
+## [0.8.0] — Phase 5: Analytics & Reports
+
+Transforms Nova into a financial-insights platform. A reusable `com.nova.finance.analytics`
+domain aggregates real transaction data into spending, cash-flow, category, budget, and goal
+analytics; powers a new Analytics page, five additive dashboard widgets, and CSV/PDF exports.
+No existing endpoint, DTO, or migration changed — backward compatible with Phases 1–4D.
+
+### Added
+- **Analytics domain (backend).** A single `AnalyticsService` orchestrates every aggregation
+  from one in-memory load of the filtered transactions, then derives the spending overview,
+  cash-flow trend (weekly/monthly/yearly bucketing), and category breakdown. Budget and goal
+  analytics reuse the existing `BudgetCalculationService` and `GoalService` engines — no
+  budget or goal math is duplicated.
+- **Analytics API (`/api/analytics`).** Additive endpoints behind the existing auth envelope:
+  `GET /overview`, `/spending`, `/cash-flow`, `/categories`, `/budgets`, `/goals`, and
+  `POST /reports/export` (CSV or PDF). All figures are computed from real transaction data.
+- **Report export.** `ReportExportService` (opencsv + OpenPDF) generates CSV and PDF reports
+  from the same `AnalyticsOverviewResponse` the UI shows, so exports always match the applied
+  filter. Added `com.opencsv:opencsv` and `com.github.librepdf:openpdf` dependencies.
+- **Analytics page (`/analytics`).** Date-period (weekly/monthly/yearly/custom), account, and
+  category filters; summary stat cards (income, expenses, net cash flow, savings rate);
+  cash-flow area chart; category-breakdown donut; top-spending-categories and upcoming-goal
+  tables; and one-click CSV/PDF export. Full loading, empty, and error states.
+- **Dashboard analytics widgets.** Five additive sections (Spending Trends, Category
+  Breakdown, Budget Distribution, Goal Progress) reusing the same analytics hooks and the
+  existing `Card`/`StatCard`/`ChartCard`/`Progress` design-system primitives. The dashboard
+  is extended, not redesigned.
+- **Sidebar + routing.** The previously stubbed "Analytics" nav item is now live
+  (`/analytics`); existing navigation is unchanged.
+
+### Improved
+- **Reuse over duplication.** Cash-flow/category aggregation share one transaction load;
+  budget/goal analytics delegate to the established calculation engines (D-5-1, D-5-2).
+- **Filter consistency.** Period presets resolve to the same UTC half-open windows used
+  elsewhere in Nova (D-5-3).
+
+### Fixed
+- None in this phase. (See `BUG_TRACKER.md` for carried-forward items; regression suite
+  remains green.)
+
 ## [0.7.0] — Phase 4D: Premium UI & Design System Refinement
 
 This phase is visual-only. No backend, API, business logic, or data-model changes

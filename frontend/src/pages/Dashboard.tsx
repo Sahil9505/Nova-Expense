@@ -24,6 +24,10 @@ import { useBudgetSummary } from '@/hooks/useBudgets';
 import { useGoalSummary } from '@/hooks/useGoals';
 import { BudgetIntelligenceWidget } from '@/components/finance/BudgetIntelligenceWidget';
 import { GoalDashboardWidget } from '@/components/finance/GoalDashboardWidget';
+import { CashFlowWidget } from '@/components/finance/CashFlowWidget';
+import { CategoryBreakdownWidget } from '@/components/finance/CategoryBreakdownWidget';
+import { BudgetDistributionWidget } from '@/components/finance/BudgetDistributionWidget';
+import { GoalProgressSummaryWidget } from '@/components/finance/GoalProgressSummaryWidget';
 import { useTheme } from '@/context/ThemeProvider';
 import { colorOf } from '@/lib/finance';
 import { formatCurrency, formatCompact } from '@/lib/utils';
@@ -363,6 +367,16 @@ export function Dashboard() {
             emptyDescription="Goals you've reached show up here."
           />
         </div>
+      </section>
+
+      <section aria-label="Spending trends" className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <CashFlowWidget title="Spending Trends" description="Income vs. expenses over time" />
+        <CategoryBreakdownWidget title="Category Breakdown" description="Where your money went" />
+      </section>
+
+      <section aria-label="Budget and goal distribution" className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <BudgetDistributionWidget title="Budget Distribution" />
+        <GoalProgressSummaryWidget title="Goal Progress" />
       </section>
 
       <Card>

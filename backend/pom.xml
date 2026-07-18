@@ -113,6 +113,20 @@
             <version>${mapstruct.version}</version>
         </dependency>
 
+        <!-- Analytics report export (Phase 5). opencsv writes the CSV report; OpenPDF
+             (LGPL/MPL, a maintained fork of iText 4) writes the PDF report. Both are
+             pure-Java with no native/binary or font-file dependencies. -->
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>5.9</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>2.0.3</version>
+        </dependency>
+
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>

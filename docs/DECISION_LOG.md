@@ -444,3 +444,120 @@ rationale.
   constraints and would ripple through the dashboard's data binding.
 - **Impact:** Charts remain Recharts-rendered and data-driven; only presentation improved.
 
+
+---
+
+## D-5-1 — Analytics is a reusable financial-intelligence domain
+
+- **Date:** 2026-07-18
+- **Decision:** All financial aggregation for Phase 5+ lives in a single
+  `com.nova.finance.analytics` module (`AnalyticsService`) that every consumer
+  (Analytics page, dashboard widgets, report exports, and future AI/OCR modules) calls
+  instead of re-deriving data. Transaction-based sections are computed from **one**
+  in-memory load of the filtered rows (`TransactionRepository.loadAnalyticsRows`) and then
+  bucketed for every view (spending overview, cash-flow trend, category breakdown) — no
+  per-section query, no N+1, no duplicate read within a request.
+- **Reason:** The spec's Golden Rule requires Analytics to be a foundation, not a screen;
+  duplicating aggregation in each surface would drift and waste queries.
+- **Alternatives considered:**
+  1. Put aggregation in the controller(s) per endpoint.
+  2. Compute each chart's data independently in the frontend.
+- **Why alternatives were rejected:** Controllers would hold business logic (Rule/architecture
+  anti-pattern — "Avoid putting analytics logic inside controllers"); client-side recompute
+  would re-fetch raw transactions and contradict the "all analytics from real transaction
+  data, computed server-side" requirement.
+- **Impact:** Future modules reuse `AnalyticsService` (or its pure reused engines) directly.
+
+---
+
+## D-5-2 — Budget & goal analytics reflect the *current* period, ignoring the date filter
+
+- **Date:** 2026-07-18
+- **Decision:** The `/api/analytics/budgets` and `/api/analytics/goals` endpoints always
+  return each budget's / goal's **current** period health, even when a date filter
+  (period/account/category) is applied to the transaction-based endpoints. The date filter
+  continues to scope spending overview, cash flow, and category analysis.
+- **Reason:** A budget's health in March is meaningless when the user is inspecting June;
+  goals have intrinsic target dates independent of the inspection window. This matches the
+  existing Phase 4B/4C semantics (budgets measure "this week/month/year").
+- **Alternatives considered:**
+  1. Slice budget/goal health to the supplied date window.
+  2. Drop the date filter from those endpoints entirely.
+- **Why alternatives were rejected:** (1) would produce nonsensical partial-period health;
+  (2) is effectively what we do, but keeping the endpoints explicit documents intent and
+  lets future UI pass a window without surprising results.
+- **Impact:** Frontend dashboard widgets call these endpoints without a date filter; the
+  Analytics page's budget/goal cards always show live standing.
+
+---
+
+## D-5-3 — Period presets resolve to UTC-bounded half-open windows
+
+- **Date:** 2026-07-18
+- **Decision:** The controller maps `period=weekly|monthly|yearly` to a `[from, to)`
+  UTC window (Monday-start week / first-of-month / first-of-year) and passes it as the
+  `AnalyticsFilter`. `custom` expects explicit `from`/`to`. The window is half-open
+  (inclusive start, exclusive end) to avoid double-counting day boundaries, consistent with
+  `BudgetPeriods` and the dashboard aggregation.
+- **Reason:** Keeps the client simple (a single `period` string) while preserving Nova's
+  date-handling invariants; the service defaults the window to the trailing 12 months when
+  none is supplied.
+- **Alternatives considered:** Send raw `from`/`to` from the UI for every preset.
+- **Why alternatives were rejected:** More wire noise and client date math; the controller
+  already owns filter resolution for other modules.
+- **Impact:** One resolution path, reused by every analytics endpoint.
+
+---
+
+## D-5-4 — Reports export via POST with a JSON filter body
+
+- **Date:** 2026-07-18
+- **Decision:** `POST /api/analytics/reports/export` accepts `{ format: CSV|PDF, from, to,
+  accountId, categoryId }` and streams the file (CSV or PDF) with a `Content-Disposition`
+  attachment. Reports are generated from the same `AnalyticsOverviewResponse` the page shows,
+  so exports always match what the user sees. The applied filter is embedded in the document
+  header.
+- **Reason:** The filter can be large (custom ranges, many dimensions); a POST body avoids
+  URL-length limits and keeps CSV and PDF behind one consistent method. Streaming bytes (not
+  the JSON envelope) lets the browser save directly.
+- **Alternatives considered:**
+  1. `GET /reports/export?...` per format.
+  2. Generate reports client-side from UI state.
+- **Why alternatives were rejected:** (1) URL length limits and two near-identical routes;
+  (2) violates "generate reports from the Analytics domain rather than UI state" and would
+  duplicate aggregation on the client.
+- **Impact:** `ReportExportService` (opencsv + OpenPDF) is the single report generator.
+
+---
+
+## D-5-5 — Export dependencies: opencsv + OpenPDF
+
+- **Date:** 2026-07-18
+- **Decision:** Added `com.opencsv:opencsv:5.9` (CSV) and `com.github.librepdf:openpdf:2.0.3`
+  (PDF) to the backend. No charting library was added — the frontend continues to use Recharts.
+- **Reason:** Both are pure-Java, actively maintained, and Java 21-clean. OpenPDF is
+  LGPL/MPL (no AGPL/license surprises) and renders documents without external fonts or
+  binaries. The project had no CSV/PDF library before Phase 5.
+- **Alternatives considered:**
+  1. Apache POI for both.
+  2. iText (AGPL) for PDF.
+  3. A SaaS/headless-chrome PDF renderer.
+- **Why alternatives were rejected:** POI is heavier than needed for CSV/PDF; iText's AGPL
+  license is restrictive for a production product; a renderer adds an external runtime
+  dependency. OpenPDF covers the requirement cleanly.
+- **Impact:** Two new test-scoped-friendly dependencies; `ReportExportServiceTest` verifies
+  both outputs.
+
+---
+
+## D-5-6 — Additive `/api/analytics` endpoints; no breaking changes
+
+- **Date:** 2026-07-18
+- **Decision:** All analytics endpoints are new (`/api/analytics/overview`, `/spending`,
+  `/cash-flow`, `/categories`, `/budgets`, `/goals`, `/reports/export`) and return the
+  standard `ApiResponse` envelope. No existing endpoint, DTO, or migration was changed.
+- **Reason:** Backward compatibility (Rule 6) and zero regression for Phases 1–4D.
+- **Alternatives considered:** Extend existing controllers with analytic params.
+- **Why alternatives were rejected:** Would blur module boundaries and risk regressions in
+  stable endpoints.
+- **Impact:** Existing dashboard/budgets/goals/transactions APIs are untouched and still pass.

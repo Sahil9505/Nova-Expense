@@ -2,7 +2,7 @@
 
 **Nova** is a premium personal finance platform focused on expense tracking, budgeting, financial insights, and a polished fintech dashboard experience.
 
-The repository has grown through six phases on a clean, production-grade monorepo: the **Phase 1** foundation (backend, frontend, design system, migrations, standards), **Phase 2** authentication and user management, **Phase 3 — Core Finance** (full CRUD for accounts, categories, and transactions plus a live dashboard), **Phase 4A — Budget Foundation** (complete budgets module), **Phase 4B — Budget Intelligence** (progress, remaining, and health analytics), **Phase 4C — Financial Goals** (a first-class goals domain alongside budgets), and the current **Phase 4D — Premium UI & Design System Refinement**, a visual-only polish pass that adds an atmospheric CSS background, a glass surface system, and centralized design tokens without changing any workflow.
+The repository has grown through seven phases on a clean, production-grade monorepo: the **Phase 1** foundation (backend, frontend, design system, migrations, standards), **Phase 2** authentication and user management, **Phase 3 — Core Finance** (full CRUD for accounts, categories, and transactions plus a live dashboard), **Phase 4A — Budget Foundation** (complete budgets module), **Phase 4B — Budget Intelligence** (progress, remaining, and health analytics), **Phase 4C — Financial Goals** (a first-class goals domain alongside budgets), **Phase 4D — Premium UI & Design System Refinement** (atmospheric background, glass surfaces, design tokens), and the current **Phase 5 — Analytics & Reports**, which adds a reusable financial-intelligence domain, an Analytics page with filters/charts/export, dashboard analytics widgets, and CSV/PDF report export.
 
 > Phase 4C is functional end to end: define long-term savings, debt-payoff, or custom goals; log contributions that maintain a running total; track derived progress, status, and an estimated completion date; and see goals surfaced on the dashboard — all using the same design and data patterns as the rest of Nova.
 
@@ -270,6 +270,22 @@ moves between accounts).
 | --- | --- | --- |
 | `GET` | `/api/dashboard/summary` | Aggregated snapshot: total balance, monthly income/expenses, net cash flow, six-month trend, category breakdown, and recent transactions |
 
+**Analytics** — the reusable financial-intelligence domain (Phase 5). Every endpoint returns
+real, user-scoped figures; budget/goal analytics reflect each entity's current period.
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/analytics/overview` | Full snapshot: spending overview, cash-flow trend, category analysis, budget & goal analytics |
+| `GET` | `/api/analytics/spending` | Income, expenses, net cash flow, savings rate for the window |
+| `GET` | `/api/analytics/cash-flow` | Income-vs-expense trend, bucketed weekly/monthly/yearly |
+| `GET` | `/api/analytics/categories` | Spending and income by category |
+| `GET` | `/api/analytics/budgets` | Budget health distribution and efficiency (current period) |
+| `GET` | `/api/analytics/goals` | Goal progress and upcoming deadlines (current) |
+| `POST` | `/api/analytics/reports/export` | Stream a CSV or PDF report for the applied filter |
+
+All analytics `GET`s accept an optional `period` (`weekly`/`monthly`/`yearly`/`custom`) and
+`accountId`/`categoryId` filters; `custom` accepts explicit `from`/`to`.
+
 ---
 
 ## Frontend Routes
@@ -280,6 +296,7 @@ shell; unauthenticated visitors are redirected to `/login`.
 | Route | Description |
 | --- | --- |
 | `/` | Dashboard — live KPIs, cash flow chart, category breakdown, recent activity, budget and goal widgets |
+| `/analytics` | Analytics — filters, summary stat cards, cash-flow/category charts, budget & goal progress, CSV/PDF export |
 | `/accounts` | Accounts list with create/edit and deactivate/reactivate |
 | `/categories` | Income and expense categories with create/edit/delete |
 | `/transactions` | Transactions list with type/account/category/date/search filters |
@@ -325,7 +342,10 @@ The quick start above does not use Docker. See `docs/DEVELOPMENT.md` for details
 - **Phase 4A** — Budget Foundation: complete budget CRUD, validation, ownership, and a native Budgets UI — *complete*
 - **Phase 4B** — Budget Intelligence: progress, remaining, and health analytics over a reusable calculation engine — *complete*
 - **Phase 4C** — Financial Goals: goal domain, contributions, derived progress, dashboard widgets, and a native Goals UI — *complete*
-- **Phase 4D** — Premium UI & Design System Refinement: atmospheric CSS background, glass surface system, standardized buttons/forms/progress, refined charts, and centralized design tokens — *complete* (this release)
-- **Phase 5** — Financial insights and receipt intelligence
+- **Phase 4D** — Premium UI & Design System Refinement: atmospheric CSS background, glass surface system, standardized buttons/forms/progress, refined charts, and centralized design tokens — *complete*
+- **Phase 5** — Analytics & Reports: a reusable financial-intelligence domain (spending,
+  cash-flow, category, budget, and goal analytics from real transaction data), a new
+  Analytics page with filters and charts, dashboard analytics widgets, and CSV/PDF export —
+  *complete* (this release)
 
 See `docs/NOVA_ARCHITECTURE_BIBLE.md` for the full vision, standards, and conventions.
