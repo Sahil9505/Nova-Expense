@@ -383,3 +383,103 @@ export interface AddGoalContributionPayload {
   note?: string;
   contributedAt?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Analytics domain (Phase 5)
+// ---------------------------------------------------------------------------
+
+export type AnalyticsGranularity = 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+export type AnalyticsPeriod = 'weekly' | 'monthly' | 'yearly' | 'custom';
+export type AnalyticsExportFormat = 'CSV' | 'PDF';
+
+/** Filter applied across the Analytics domain. Any field may be omitted. */
+export interface AnalyticsFilter {
+  period?: AnalyticsPeriod;
+  from?: string;
+  to?: string;
+  accountId?: string;
+  categoryId?: string;
+}
+
+/** Headline income / expenses / net / savings rate for the applied window. */
+export interface SpendingOverview {
+  income: number;
+  expenses: number;
+  netCashFlow: number;
+  savingsRatePct: number;
+  transactionCount: number;
+  currency: string;
+}
+
+/** One time bucket of the cash-flow trend. */
+export interface CashFlowPoint {
+  periodKey: string;
+  label: string;
+  income: number;
+  expenses: number;
+  net: number;
+}
+
+export interface CashFlowResponse {
+  granularity: AnalyticsGranularity;
+  currency: string;
+  points: CashFlowPoint[];
+}
+
+/** One category's total within the analytics window. */
+export interface CategoryBreakdownItem {
+  name: string;
+  color?: string | null;
+  icon?: string | null;
+  amount: number;
+  type: 'INCOME' | 'EXPENSE';
+}
+
+export interface CategoryAnalysis {
+  expenseTotal: number;
+  incomeTotal: number;
+  expenses: CategoryBreakdownItem[];
+  incomes: CategoryBreakdownItem[];
+  topCategories: CategoryBreakdownItem[];
+  currency: string;
+}
+
+/** Budget health on top of the reusable BudgetSummary shape. */
+export interface BudgetAnalytics {
+  budgetSummary: BudgetSummary;
+  healthDistribution: Record<string, number>;
+  budgetEfficiencyPct: number;
+  currency: string;
+}
+
+/** Goal progress on top of the reusable GoalSummary shape. */
+export interface GoalAnalytics {
+  goalSummary: GoalSummary;
+  upcomingDeadlines: GoalWithProgress[];
+  contributionTotal: number;
+  currency: string;
+}
+
+/** The complete Analytics payload for the applied filter. */
+export interface AnalyticsOverview {
+  spendingOverview: SpendingOverview;
+  cashFlow: CashFlowResponse;
+  categoryAnalysis: CategoryAnalysis;
+  budgetAnalytics: BudgetAnalytics;
+  goalAnalytics: GoalAnalytics;
+  currency: string;
+  generatedAt: string;
+  appliedFrom: string;
+  appliedTo: string;
+  accountId?: string | null;
+  categoryId?: string | null;
+}
+
+/** Body for POST /api/analytics/reports/export. */
+export interface AnalyticsExportRequest {
+  format: AnalyticsExportFormat;
+  from?: string;
+  to?: string;
+  accountId?: string;
+  categoryId?: string;
+}

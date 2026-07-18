@@ -244,3 +244,68 @@ export const goalsApi = {
     api.post<GoalDetail>(`/api/goals/${id}/contributions`, payload),
   summary: () => api.get<GoalSummary>('/api/goals/summary'),
 };
+
+// ---------------------------------------------------------------------------
+// Analytics API (Phase 5)
+// ---------------------------------------------------------------------------
+
+import type {
+  AnalyticsExportFormat,
+  AnalyticsFilter,
+  AnalyticsOverview,
+  BudgetAnalytics,
+  CashFlowResponse,
+  CategoryAnalysis,
+  GoalAnalytics,
+  SpendingOverview,
+} from '@/types';
+
+function analyticsQuery(filter: AnalyticsFilter = {}): string {
+  const params = new URLSearchParams();
+  if (filter.period) params.set('period', filter.period);
+  if (filter.from) params.set('from', filter.from);
+  if (filter.to) params.set('to', filter.to);
+  if (filter.accountId) params.set('accountId', filter.accountId);
+  if (filter.categoryId) params.set('categoryId', filter.categoryId);
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
+export const analyticsApi = {
+  overview: (filter: AnalyticsFilter = {}) =>
+    api.get<AnalyticsOverview>(`/api/analytics/overview${analyticsQuery(filter)}`),
+  spending: (filter: AnalyticsFilter = {}) =>
+    api.get<SpendingOverview>(`/api/analytics/spending${analyticsQuery(filter)}`),
+  cashFlow: (filter: AnalyticsFilter = {}) =>
+    api.get<CashFlowResponse>(`/api/analytics/cash-flow${analyticsQuery(filter)}`),
+  categories: (filter: AnalyticsFilter = {}) =>
+    api.get<CategoryAnalysis>(`/api/analytics/categories${analyticsQuery(filter)}`),
+  budgets: () => api.get<BudgetAnalytics>('/api/analytics/budgets'),
+  goals: () => api.get<GoalAnalytics>('/api/analytics/goals'),
+  exportReport: async (format: AnalyticsExportFormat, filter: AnalyticsFilter = {}) => {
+    const body: { format: AnalyticsExportFormat; from?: string; to?: string; accountId?: string; categoryId?: string } = {
+      format,
+      from: filter.from,
+      to: filter.to,
+      accountId: filter.accountId,
+      categoryId: filter.categoryId,
+    };
+    const response = await fetch(`${API_BASE_URL}/api/analytics/reports/export`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      throw new ApiError(response.status, `Export failed with status ${response.status}`);
+    }
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `nova-analytics-${new Date().toISOString().slice(0, 10)}.${format.toLowerCase()}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+};

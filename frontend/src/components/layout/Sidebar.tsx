@@ -27,7 +27,7 @@ const navItems: NavItem[] = [
   { label: 'Categories', icon: PieChart, to: '/categories' },
   { label: 'Budgets', icon: Wallet, to: '/budgets' },
   { label: 'Goals', icon: Target, to: '/goals' },
-  { label: 'Analytics', icon: BarChart3, soon: true },
+  { label: 'Analytics', icon: BarChart3, to: '/analytics' },
   { label: 'Profile', icon: Settings, to: '/settings/profile' },
 ];
 
