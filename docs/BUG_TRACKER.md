@@ -9,6 +9,17 @@ None known.
 
 ## Fixed Bugs
 
+### B-6-1 — Receipt upload must never persist a row with a null `storage_key`
+- **Severity:** High (design safeguard)
+- **Symptom:** N/A — caught by code review, not observed in production.
+- **Root cause:** The `receipts.storage_key` column is `NOT NULL`, so persisting a row
+  before a storage key exists would violate the constraint and surface as a 500.
+- **Fix:** `ReceiptService.upload` stores the image **first** (obtaining the key), then
+  inserts the `Receipt` exactly once with `storageKey` already set — a single INSERT that
+  can never violate the constraint. Any failure while reading the uploaded bytes is wrapped
+  in `RECEIPT_STORAGE_FAILED` rather than leaking a generic 500.
+- **Resolved in:** v0.8.0
+
 ### B-4A-1 — Budget `Period` enum did not match the Phase 4A spec
 - **Severity:** Low
 - **Symptom:** The `Budget.Period` stub exposed `DAILY / WEEKLY / MONTHLY /

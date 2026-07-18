@@ -19,6 +19,12 @@ spring:
     default-property-inclusion: non_null
     serialization:
       write-dates-as-timestamps: false
+  servlet:
+    multipart:
+      # Hard ceiling; the receipt service enforces the 10 MB product limit itself
+      # so it can return a friendly error rather than a container rejection.
+      max-file-size: 12MB
+      max-request-size: 12MB
 
 nova:
   cors:
@@ -31,6 +37,20 @@ nova:
     secret: ${JWT_SECRET:nova-local-development-secret-do-not-use-in-production-0123456789}
     access-token-minutes: ${JWT_ACCESS_TOKEN_MINUTES:15}
     refresh-token-days: ${JWT_REFRESH_TOKEN_DAYS:30}
+  receipt:
+    upload:
+      max-file-size-mb: 10
+      allowed-content-types: image/png,image/jpeg,image/jpg,image/webp
+      allowed-extensions: png,jpg,jpeg,webp
+    storage:
+      backend: local
+      local:
+        path: ${NOVA_RECEIPT_DIR:./data/receipts}
+    ocr:
+      provider: tesseract
+      path: ${TESSERACT_BIN:tesseract}
+      languages: eng
+      timeout-seconds: 20
   budget:
     # Budget health thresholds as fractions of the limit (not percentages).
     # Defaults apply when omitted; override per deployment to tune status boundaries.

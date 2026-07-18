@@ -28,6 +28,7 @@ import { CashFlowWidget } from '@/components/finance/CashFlowWidget';
 import { CategoryBreakdownWidget } from '@/components/finance/CategoryBreakdownWidget';
 import { BudgetDistributionWidget } from '@/components/finance/BudgetDistributionWidget';
 import { GoalProgressSummaryWidget } from '@/components/finance/GoalProgressSummaryWidget';
+import { RecentReceiptsWidget } from '@/components/finance/RecentReceiptsWidget';
 import { useTheme } from '@/context/ThemeProvider';
 import { colorOf } from '@/lib/finance';
 import { formatCurrency, formatCompact } from '@/lib/utils';
@@ -372,6 +373,13 @@ export function Dashboard() {
       <section aria-label="Spending trends" className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <CashFlowWidget title="Spending Trends" description="Income vs. expenses over time" />
         <CategoryBreakdownWidget title="Category Breakdown" description="Where your money went" />
+      </section>
+
+      <section aria-label="Receipts" className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <RecentReceiptsWidget />
+        </div>
+        <CashFlowWidget title="This Month" description="A closer look at cash flow" />
       </section>
 
       <section aria-label="Budget and goal distribution" className="grid grid-cols-1 gap-4 lg:grid-cols-2">

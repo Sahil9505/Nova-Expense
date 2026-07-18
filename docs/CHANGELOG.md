@@ -3,7 +3,55 @@
 All notable changes to Nova are documented in this file. The format is based on
 keeping a clear record of Added, Improved, and Fixed work per release.
 
-## [0.8.0] — Phase 5: Analytics & Reports
+## [0.8.0] — Phase 6: Smart Receipt Capture
+
+Adds an intelligent document-processing pipeline that turns a photo or upload of a receipt
+into a confidence-scored transaction draft the user reviews before saving. The domain is
+fully isolated (upload, validation, storage, OCR extraction, normalization, confidence
+scoring, draft, review, transaction creation) and reuses the existing transaction-creation
+flow — so balances and ownership rules are unchanged. No existing endpoint, DTO, or
+migration was modified.
+
+### Added
+- **Receipt domain (backend).** A dedicated `com.nova.finance.receipt` package with
+  `ReceiptService` (orchestrator), `ReceiptController`, `ReceiptMapper` (MapStruct),
+  `ReceiptValidationService`, `ReceiptOcrService`, `ReceiptParsingService`,
+  `ReceiptConfidenceService`, `ReceiptProperties`, and the
+  `Receipt` entity + `V7__receipts.sql` migration (stored separately from transactions).
+- **OCR abstraction.** `OcrProvider` interface with a shipped `TesseractOcrProvider`
+  (real Tesseract via CLI). `isAvailable()` lets the pipeline degrade to manual entry when
+  the engine is absent; selection is by name via `nova.receipt.ocr.provider`.
+- **Storage abstraction.** `ReceiptStorage` interface with a shipped `LocalReceiptStorage`
+  (per-user directory). Selection is by name via `nova.receipt.storage.backend`, so
+  Cloudinary / AWS S3 / MinIO can be added as another bean with no pipeline change.
+- **Confidence scoring.** Every extracted field is `ReceiptField<T>(value, confidence)` with
+  a 0–100 score and a `lowConfidence` flag (threshold 60). The review UI highlights
+  low-confidence values; missing fields stay `null` (never invented).
+- **Receipt API (`/api/receipts`).** `POST` upload (multipart, 10 MB, PNG/JPEG/JPG/WEBP),
+  `GET /recent`, `GET /{id}`, `GET /{id}/image` (raw bytes), `POST /{id}/process`
+  (OCR → parse → score), `GET /{id}/draft` (editable transaction draft), and
+  `POST /{id}/finalize` (reuses `TransactionService` — the only path that creates a
+  transaction).
+- **Frontend Receipts feature.** Types + `receiptsApi` (incl. a `receiptImageUrl` blob
+  helper) + `useReceipts` hooks; `ReceiptUploadDialog` (drag/drop + client-side
+  type/size validation), `ConfidenceIndicator`/`ConfidenceField`, `ReceiptPreview`, and
+  `ReceiptDraftForm`; the `/receipts` list page and `/receipts/:id` review page; and a
+  lightweight `RecentReceiptsWidget` on the dashboard.
+- **Error handling.** Dedicated `ErrorCode`s (`RECEIPT_UNSUPPORTED_TYPE`,
+  `RECEIPT_FILE_TOO_LARGE`, `RECEIPT_INVALID_IMAGE`, `RECEIPT_OCR_UNAVAILABLE`,
+  `RECEIPT_PROCESSING_FAILED`, `RECEIPT_STORAGE_FAILED`) with friendly messages, plus
+  graceful OCR-failure → `FAILED` status so users can still enter the transaction manually.
+
+### Improved
+- Sidebar gains a Receipts entry; in-app version marker advanced to Phase 6 (v0.8.0).
+
+### Fixed
+- `Receipt.upload` no longer persists a row before the storage key exists (which violated
+  the `storage_key NOT NULL` constraint under Flyway `create-drop`); the file is stored
+  first, then the receipt is inserted once with its key. Upload no longer declares a
+  checked `IOException` (wrapped in `RECEIPT_STORAGE_FAILED`).
+
+## [0.7.0] — Phase 5: Analytics & Reports
 
 Transforms Nova into a financial-insights platform. A reusable `com.nova.finance.analytics`
 domain aggregates real transaction data into spending, cash-flow, category, budget, and goal

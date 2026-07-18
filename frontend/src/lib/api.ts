@@ -225,6 +225,57 @@ export const budgetsApi = {
 };
 
 // ---------------------------------------------------------------------------
+// Receipts API (Phase 6 — Smart Receipt Capture)
+// ---------------------------------------------------------------------------
+
+import type {
+  FinalizeReceiptPayload,
+  Receipt,
+  ReceiptDraft,
+  ReceiptSummary,
+} from '@/types';
+
+export const receiptsApi = {
+  /** Uploads a receipt image (multipart). Returns the stored receipt. */
+  upload: (file: File) => {
+    const body = new FormData();
+    body.append('file', file);
+    return request<Receipt>('/api/receipts', { method: 'POST', body });
+  },
+  /** Recent uploads for the dashboard widget and the receipts list. */
+  recent: (limit = 6) =>
+    api.get<ReceiptSummary[]>(`/api/receipts/recent?limit=${limit}`),
+  /** Every receipt for the current user, newest first. */
+  list: () => api.get<ReceiptSummary[]>('/api/receipts/recent?limit=8'),
+  /** Full receipt with extracted fields. */
+  get: (id: string) => api.get<Receipt>(`/api/receipts/${id}`),
+  /** Runs OCR + extraction for a receipt (synchronous, may take a few seconds). */
+  process: (id: string) =>
+    api.post<Receipt>(`/api/receipts/${id}/process`),
+  /** Pre-filled editable transaction draft for the review screen. */
+  draft: (id: string) => api.get<ReceiptDraft>(`/api/receipts/${id}/draft`),
+  /** Creates a transaction from the user's edited draft and links it. */
+  finalize: (id: string, payload: FinalizeReceiptPayload) =>
+    api.post<Transaction>(`/api/receipts/${id}/finalize`, payload),
+};
+
+/**
+ * Streams a receipt's stored image as an object URL. The image endpoint returns
+ * raw bytes (not the JSON envelope), so it is fetched directly with auth headers
+ * and revoked by the caller when the preview unmounts.
+ */
+export async function receiptImageUrl(id: string): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/api/receipts/${id}/image`, {
+    headers: authHeaders(),
+  });
+  if (!response.ok) {
+    throw new ApiError(response.status, 'Could not load the receipt image.');
+  }
+  const blob = await response.blob();
+  return window.URL.createObjectURL(blob);
+}
+
+// ---------------------------------------------------------------------------
 // Goals API (Phase 4C)
 // ---------------------------------------------------------------------------
 

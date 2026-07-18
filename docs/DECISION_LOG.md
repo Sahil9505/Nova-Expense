@@ -561,3 +561,93 @@ rationale.
 - **Why alternatives were rejected:** Would blur module boundaries and risk regressions in
   stable endpoints.
 - **Impact:** Existing dashboard/budgets/goals/transactions APIs are untouched and still pass.
+
+---
+
+## D-6-1 — Smart Receipt Capture is a modular pipeline, not "OCR"
+
+- **Date:** 2026-07-18
+- **Decision:** Receipt capture is modeled as an isolated, stage-by-stage pipeline —
+  `Upload → Validation → Storage → OCR Extraction → Normalization (parse) → Confidence
+  Scoring → Transaction Draft → User Review → Transaction Creation`. Each stage is a
+  separate, replaceable collaborator (`ReceiptValidationService`, `ReceiptStorage`,
+  `OcrProvider`, `ReceiptParsingService`, `ReceiptConfidenceService`, `ReceiptService`).
+- **Reason:** The Phase 6 mandate is explicit — "Receipt Capture is NOT OCR." OCR is one
+  implementation detail of one stage. Encoding the whole flow as OCR would block future
+  AI extractors (ML layout models, cloud document APIs) from dropping in without
+  rewrites.
+- **Alternatives considered:**
+  1. A single `ReceiptOcrService` that takes a file and returns a transaction.
+  2. An "OCR microservice" that owns storage and parsing too.
+- **Why alternatives were rejected:** Both collapse extraction, parsing, and scoring into
+  one unit, so replacing the engine means rewriting the flow. Keeping stages isolated means
+  a future provider only implements `OcrProvider.extractText(image) → text` (or replaces
+  `ReceiptParsingService`) and the rest of the system is unchanged.
+- **Impact:** Future AI features extend the same pipeline. `ReceiptService` is the only
+  orchestrator and reuses the existing `TransactionService` to create the transaction, so
+  balance/ownership rules stay consistent everywhere.
+
+---
+
+## D-6-2 — OCR behind a provider interface, selected by name
+
+- **Date:** 2026-07-18
+- **Decision:** `OcrProvider` exposes `name()`, `isAvailable()`, and
+  `extractText(image, contentType) → OcrResult(text, provider)`. `TesseractOcrProvider`
+  (CLI-based, real Tesseract OCR) is the shipped implementation. `ReceiptConfig` selects
+  the active provider by name from `nova.receipt.ocr.provider`.
+- **Reason:** A future cloud or ML provider is a drop-in: implement the interface and point
+  configuration at it. `isAvailable()` lets the pipeline degrade gracefully (mark the
+  receipt `FAILED`, fall back to manual entry) instead of throwing when the engine is
+  missing.
+- **Alternatives considered:**
+  1. Bake Tesseract calls directly into `ReceiptService`.
+  2. A hardcoded provider chain.
+- **Why alternatives were rejected:** Tight coupling would make every new provider a fork of
+  the service; a hardcoded chain is unconfigurable. Name-based selection mirrors the
+  storage-selection decision (D-6-3).
+- **Impact:** Adding Google Vision, AWS Textract, or a local ML model means a new
+  `@Component` + a config value, no changes to the pipeline or API.
+
+---
+
+## D-6-3 — Storage behind a minimal interface, swappable backend
+
+- **Date:** 2026-07-18
+- **Decision:** `ReceiptStorage` exposes `store(userId, bytes, contentType, filename) → key`,
+  `load(key, contentType) → StoredFile`, `delete(key)`. `LocalReceiptStorage` (per-user
+  directory under `nova.receipt.storage.local.path`) ships today. `ReceiptConfig` selects
+  the backend by name from `nova.receipt.storage.backend`.
+- **Reason:** Receipts are stored separately from transactions (separate table, separate
+  lifecycle). The contract is intentionally tiny so Cloudinary, AWS S3, or MinIO can be
+  added as another `@Component` without touching the service, controller, or pipeline.
+- **Alternatives considered:**
+  1. Store image bytes as a column on the `receipts` table (BLOB).
+  2. Couple storage to the transaction attachment system.
+- **Why alternatives were rejected:** A BLOB column bloats the row and the JSON envelope;
+  coupling to transactions violates "store uploads separately from transactions" and the
+  separation of concerns. The interface keeps the business logic storage-agnostic.
+- **Impact:** Local disk is sufficient for single-node deployments; switching to S3/MinIO is
+  a configuration change, not a code change.
+
+---
+
+## D-6-4 — Confidence scoring is deterministic and isolated from extraction
+
+- **Date:** 2026-07-18
+- **Decision:** Every extracted field is wrapped in `ReceiptField<T>(value, confidence)` with
+  a 0–100 `confidence` and a `lowConfidence` flag (threshold 60). `ReceiptConfidenceService`
+  assigns scores from cheap, explainable signals (present + well-formed, label-backed,
+  amounts reconcile) after parsing. The frontend highlights `lowConfidence` fields.
+- **Reason:** The user must stay in control ("review extracted values before saving"). A
+  transparent score tells them which values to double-check without pretending to be a model.
+  Nothing is invented — a missing field stays `null` and scores 0.
+- **Alternatives considered:**
+  1. A learned confidence model.
+  2. No confidence at all (trust the parse).
+- **Why alternatives were rejected:** A model adds a training/serving dependency the phase
+  explicitly excludes ("No fake OCR… No placeholder parsing"); blind trust violates the
+  user-in-control rule and turns parser gaps into silent bad transactions.
+- **Impact:** The review screen renders `ConfidenceField`/`ConfidenceIndicator` for every
+  detected value; a future ML scorer can replace `ReceiptConfidenceService.populate` without
+  changing the field shape or UI.

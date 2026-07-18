@@ -288,6 +288,43 @@ All analytics `GET`s accept an optional `period` (`weekly`/`monthly`/`yearly`/`c
 
 ---
 
+## Smart Receipt Capture (Phase 6)
+
+Photograph or upload a receipt and Nova extracts the financial details for you to review
+before saving — you always stay in control. The feature is a modular pipeline, not "OCR";
+OCR is one replaceable stage behind a provider interface.
+
+**Pipeline (each stage isolated):**
+`Upload → Validation → Storage → OCR Extraction → Normalization (parse) → Confidence
+Scoring → Transaction Draft → User Review → Transaction Creation`.
+
+- **Upload** accepts PNG/JPEG/JPG/WEBP up to 10 MB; validation rejects unsupported types,
+  oversized files, and corrupted/undecodable images with friendly errors.
+- **Storage** keeps receipt images in a separate `receipts` table and a swappable
+  `ReceiptStorage` backend (local disk today; Cloudinary / S3 / MinIO are config-only
+  additions).
+- **OCR** runs behind `OcrProvider`; the shipped `TesseractOcrProvider` uses real
+  Tesseract. If the engine is unavailable the receipt is marked `FAILED` and the user can
+  still enter the transaction manually.
+- **Confidence scoring** wraps every field in a `(value, confidence)` pair; the review UI
+  highlights low-confidence values. Missing fields stay `null` — nothing is invented.
+- **Finalize** is the *only* step that creates a transaction, and it reuses the existing
+  transaction service, so balances and ownership rules are unchanged.
+
+**Receipt API** (`/api/receipts`, all protected, `ApiResponse` envelope):
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/api/receipts` (multipart `file`) | Upload and store a receipt |
+| `GET` | `/api/receipts/recent?limit=6` | Recent uploads (dashboard + list) |
+| `GET` | `/api/receipts/{id}` | Receipt with extracted fields |
+| `GET` | `/api/receipts/{id}/image` | Raw stored image bytes |
+| `POST` | `/api/receipts/{id}/process` | Run OCR → parse → score |
+| `GET` | `/api/receipts/{id}/draft` | Pre-filled editable transaction draft |
+| `POST` | `/api/receipts/{id}/finalize` | Create the transaction and link it |
+
+---
+
 ## Frontend Routes
 
 All application routes below are protected and render inside the authenticated app
@@ -302,6 +339,8 @@ shell; unauthenticated visitors are redirected to `/login`.
 | `/transactions` | Transactions list with type/account/category/date/search filters |
 | `/transactions/new` | Create a transaction |
 | `/transactions/:id/edit` | Edit an existing transaction |
+| `/receipts` | Receipts list with upload and recent-uploads widget |
+| `/receipts/:id` | Review a receipt: extracted fields, confidence, editable draft, save |
 | `/budgets` | Budgets list with create/edit, active lifecycle, and progress |
 | `/goals` | Goals list with create/edit, contributions, and progress |
 | `/settings/profile` | Profile and password management |
@@ -346,6 +385,14 @@ The quick start above does not use Docker. See `docs/DEVELOPMENT.md` for details
 - **Phase 5** — Analytics & Reports: a reusable financial-intelligence domain (spending,
   cash-flow, category, budget, and goal analytics from real transaction data), a new
   Analytics page with filters and charts, dashboard analytics widgets, and CSV/PDF export —
-  *complete* (this release)
+  *complete*
+- **Phase 6** — Smart Receipt Capture: a modular receipt pipeline (upload → validation →
+  storage → OCR extraction → normalization → confidence scoring → draft → review →
+  transaction creation). OCR and storage are behind swappable interfaces; extraction is
+  confidence-scored and the user reviews before saving. Adds a Receipts UI, a dashboard
+  Recent Receipts widget, and dedicated receipt API — *complete* (this release)
+- **Phase 7** — (future) AI categorization, budgeting advice, natural-language chat, and
+  deeper document understanding can plug into the Phase 6 pipeline as new `OcrProvider` /
+  `ReceiptParsingService` implementations without changing the rest of the system.
 
 See `docs/NOVA_ARCHITECTURE_BIBLE.md` for the full vision, standards, and conventions.

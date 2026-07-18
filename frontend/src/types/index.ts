@@ -483,3 +483,115 @@ export interface AnalyticsExportRequest {
   accountId?: string;
   categoryId?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Receipt domain (Phase 6 — Smart Receipt Capture)
+// ---------------------------------------------------------------------------
+
+/** Lifecycle of a captured receipt. The backend drives these transitions. */
+export type ReceiptStatus =
+  | 'UPLOADED'
+  | 'PROCESSING'
+  | 'EXTRACTED'
+  | 'FAILED'
+  | 'FINALIZED';
+
+/**
+ * One extracted field: its value (string or number, or null when not found),
+ * a 0–100 confidence score (null when missing), and a precomputed
+ * `lowConfidence` flag the UI uses to highlight values worth a second look.
+ * The pipeline never invents values, so a missing field is `null`, not a guess.
+ */
+export interface ReceiptField {
+  value: string | number | null;
+  confidence: number | null;
+  lowConfidence: boolean;
+}
+
+/** A detected line item on a receipt. */
+export interface ReceiptItem {
+  name: string;
+  amount: ReceiptField | null;
+}
+
+/** The structured, confidence-scored result of scanning a receipt. */
+export interface ReceiptFields {
+  merchant: ReceiptField | null;
+  date: ReceiptField | null;
+  time: ReceiptField | null;
+  currency: ReceiptField | null;
+  subtotal: ReceiptField | null;
+  tax: ReceiptField | null;
+  discount: ReceiptField | null;
+  total: ReceiptField | null;
+  paymentMethod: ReceiptField | null;
+  receiptNumber: ReceiptField | null;
+  items: ReceiptItem[];
+  overallConfidence: number | null;
+}
+
+/** Full receipt projection, used by the detail/review screens. */
+export interface Receipt {
+  id: string;
+  filename: string | null;
+  contentType: string;
+  fileSizeBytes: number;
+  status: ReceiptStatus;
+  statusMessage: string | null;
+  ocrProvider: string | null;
+  overallConfidence: number | null;
+  currency: string | null;
+  fields: ReceiptFields | null;
+  linkedTransactionId: string | null;
+  extractedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Lightweight receipt projection for lists and the dashboard widget. */
+export interface ReceiptSummary {
+  id: string;
+  filename: string | null;
+  contentType: string;
+  fileSizeBytes: number;
+  status: ReceiptStatus;
+  overallConfidence: number | null;
+  currency: string | null;
+  linkedTransactionId: string | null;
+  extractedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * The user's editable transaction draft, returned with the receipt so the
+ * review form can be pre-filled. Account and category are intentionally absent
+ * (the user must choose them); the rest default to the extracted values.
+ */
+export interface ReceiptDraft {
+  receipt: Receipt;
+  suggestion: {
+    amount: number | null;
+    type: TransactionType;
+    accountId: string | null;
+    destinationAccountId: string | null;
+    categoryId: string | null;
+    merchant: string | null;
+    note: string | null;
+    currency: string | null;
+    tags: string | null;
+    occurredAt: string;
+  };
+}
+
+/** Payload sent when the user confirms a receipt's transaction. */
+export interface FinalizeReceiptPayload {
+  accountId: string;
+  categoryId: string;
+  type: TransactionType;
+  amount: number;
+  merchant?: string;
+  note?: string;
+  currency: string;
+  occurredAt: string;
+}

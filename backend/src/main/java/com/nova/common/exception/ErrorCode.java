@@ -15,6 +15,12 @@ public enum ErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "Authentication is required to access this resource."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "The presented token is invalid or expired."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "You are not allowed to perform this action."),
+    RECEIPT_UNSUPPORTED_TYPE(HttpStatus.BAD_REQUEST, "That file type is not supported."),
+    RECEIPT_FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "The file exceeds the maximum allowed size."),
+    RECEIPT_INVALID_IMAGE(HttpStatus.BAD_REQUEST, "The image could not be read; it may be corrupted."),
+    RECEIPT_OCR_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "The receipt scanner is not available right now."),
+    RECEIPT_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "We could not process this receipt."),
+    RECEIPT_STORAGE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "We could not store this receipt."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred.");
 
     private final HttpStatus status;

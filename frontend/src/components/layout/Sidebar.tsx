@@ -1,9 +1,10 @@
 import {
+  ArrowLeftRight,
   BarChart3,
+  Camera,
   CreditCard,
   LayoutDashboard,
   PieChart,
-  Receipt,
   Settings,
   Target,
   Wallet,
@@ -22,7 +23,8 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/' },
-  { label: 'Transactions', icon: Receipt, to: '/transactions' },
+  { label: 'Transactions', icon: ArrowLeftRight, to: '/transactions' },
+  { label: 'Receipts', icon: Camera, to: '/receipts' },
   { label: 'Accounts', icon: CreditCard, to: '/accounts' },
   { label: 'Categories', icon: PieChart, to: '/categories' },
   { label: 'Budgets', icon: Wallet, to: '/budgets' },
@@ -112,7 +114,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
       <div className="rounded-xl border border-border/60 bg-surface-2/50 px-3 py-3 text-xs text-muted-foreground">
         <p className="font-medium text-foreground">Nova Finance</p>
-        <p>Phase 4D · v0.7.0</p>
+        <p>Phase 6 · v0.8.0</p>
       </div>
     </div>
   );

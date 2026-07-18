@@ -245,3 +245,37 @@ export const goalContributionSchema = z.object({
 
 export type GoalContributionValues = z.infer<typeof goalContributionSchema>;
 
+// ---------------------------------------------------------------------------
+// Receipt capture (Phase 6)
+// ---------------------------------------------------------------------------
+
+/** Receipts become a single income or expense transaction — transfers aren't supported. */
+export const RECEIPT_TYPE_OPTIONS: { value: 'INCOME' | 'EXPENSE'; label: string }[] = [
+  { value: 'EXPENSE', label: 'Expense' },
+  { value: 'INCOME', label: 'Income' },
+];
+
+/**
+ * Validation for confirming a captured receipt. Mirrors the backend's
+ * FinalizeReceiptRequest so the same rules apply: account + category required,
+ * a positive amount, a 3–8 char currency, and a date. The amount/merchant/currency
+ * default to the extracted draft but can be corrected by the user.
+ */
+export const finalizeReceiptSchema = z.object({
+  type: z.enum(['INCOME', 'EXPENSE']),
+  accountId: z.string().min(1, 'An account is required'),
+  categoryId: z.string().min(1, 'A category is required'),
+  amount: z.coerce
+    .number({ invalid_type_error: 'Amount is required' })
+    .positive('Amount must be greater than zero'),
+  merchant: z.string().trim().max(255).optional().or(z.literal('')),
+  note: z.string().trim().max(255).optional().or(z.literal('')),
+  currency: z
+    .string()
+    .min(1, 'Currency is required')
+    .refine((value) => value.length >= 3 && value.length <= 8, 'Currency must be 3–8 characters'),
+  occurredAt: z.string().min(1, 'A date is required'),
+});
+
+export type FinalizeReceiptValues = z.infer<typeof finalizeReceiptSchema>;
+

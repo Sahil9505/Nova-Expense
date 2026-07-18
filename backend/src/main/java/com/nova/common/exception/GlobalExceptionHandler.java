@@ -2,6 +2,7 @@ package com.nova.common.exception;
 
 import com.nova.common.api.ApiResponse;
 import com.nova.common.validation.ValidationError;
+import com.nova.finance.receipt.ReceiptProcessingException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,6 +81,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidTokenException.class)
     public ResponseEntity<ApiResponse<ApiError>> handleInvalidToken(NovaException ex) {
+        ApiError body = ApiError.of(ex.getErrorCode(), ex.getMessage());
+        return build(ex.getErrorCode().getStatus(), ApiResponse.error(ex.getMessage(), body));
+    }
+
+    @ExceptionHandler(ReceiptProcessingException.class)
+    public ResponseEntity<ApiResponse<ApiError>> handleReceipt(NovaException ex) {
         ApiError body = ApiError.of(ex.getErrorCode(), ex.getMessage());
         return build(ex.getErrorCode().getStatus(), ApiResponse.error(ex.getMessage(), body));
     }
