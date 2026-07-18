@@ -25,6 +25,7 @@
         <mapstruct.version>1.6.3</mapstruct.version>
         <lombok.version>1.18.38</lombok.version>
         <flyway.version>12.6.0</flyway.version>
+        <spring-ai.version>1.1.8</spring-ai.version>
     </properties>
 
     <!-- Flyway 12 pulls Jackson 3 (tools.jackson) transitively. Jackson 3.1.x's
@@ -35,6 +36,13 @@
          Flyway 12.6.0 is the first release that supports PostgreSQL 18. -->
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>tools.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
@@ -54,6 +62,26 @@
     </dependencyManagement>
 
     <dependencies>
+        <!-- Spring AI: provider-agnostic ChatClient abstraction. We depend on the
+             OpenAI *core* module (not the starter) so the only beans on the classpath
+             are OpenAiApi / OpenAiChatModel / OpenAiChatOptions — no auto-configured
+             audio/image/embedding/moderation models that would each demand an API key
+             at construction time and crash startup when no key is set. OpenRouter
+             speaks the OpenAI-compatible chat-completions API, so the same ChatClient
+             talks to OpenRouter by pointing its base URL at https://openrouter.ai/api/v1.
+             The AI domain depends only on the ChatClient API, so the provider can be
+             swapped without touching business logic. -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-openai</artifactId>
+        </dependency>
+        <!-- ChatClient API (org.springframework.ai.chat.client) used by the gateway.
+             spring-ai-openai depends on it at runtime/optional, so declare it
+             explicitly. Pulls in spring-ai-model (ToolCallingManager) transitively. -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-client-chat</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

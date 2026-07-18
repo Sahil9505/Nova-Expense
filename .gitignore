@@ -15,6 +15,10 @@ node_modules/
 *.log
 logs/
 
+# ---------- Runtime data (not source) ----------
+# Uploaded receipt images are user runtime data, not part of the repository.
+backend/data/
+
 # ---------- OS / editor ----------
 .DS_Store
 .idea/

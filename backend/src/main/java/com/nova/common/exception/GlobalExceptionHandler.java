@@ -1,5 +1,6 @@
 package com.nova.common.exception;
 
+import com.nova.ai.AiCopilotException;
 import com.nova.common.api.ApiResponse;
 import com.nova.common.validation.ValidationError;
 import com.nova.finance.receipt.ReceiptProcessingException;
@@ -87,6 +88,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ReceiptProcessingException.class)
     public ResponseEntity<ApiResponse<ApiError>> handleReceipt(NovaException ex) {
+        ApiError body = ApiError.of(ex.getErrorCode(), ex.getMessage());
+        return build(ex.getErrorCode().getStatus(), ApiResponse.error(ex.getMessage(), body));
+    }
+
+    @ExceptionHandler(AiCopilotException.class)
+    public ResponseEntity<ApiResponse<ApiError>> handleAiCopilot(AiCopilotException ex) {
         ApiError body = ApiError.of(ex.getErrorCode(), ex.getMessage());
         return build(ex.getErrorCode().getStatus(), ApiResponse.error(ex.getMessage(), body));
     }

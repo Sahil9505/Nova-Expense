@@ -56,6 +56,24 @@ nova:
     # Defaults apply when omitted; override per deployment to tune status boundaries.
     warning-threshold: ${NOVA_BUDGET_WARNING:0.80}   # WARNING once 80% is spent
     exceeded-threshold: ${NOVA_BUDGET_EXCEEDED:1.00} # EXCEEDED once 100% is spent
+  ai:
+    # Nova AI Copilot defaults. The model id, temperature, and token ceiling are
+    # Nova's own. The provider key is read from nova.ai.api-key (populated from the
+    # OPENROUTER_API_KEY env var) — NOT from spring.ai.openai.* — because this app
+    # excludes the starter's OpenAI auto-configuration and builds the model manually
+    # in OpenRouterConfig. The copilot starts even when the key is absent and answers
+    # with a friendly "not configured" message rather than crashing the app.
+    api-key: ${OPENROUTER_API_KEY:unconfigured-placeholder-key}
+    # OpenRouter model slug. Override with OPENROUTER_MODEL.
+    model: ${OPENROUTER_MODEL:deepseek/deepseek-chat-v3-0324:free}
+    # OpenRouter base URL. OpenAI-compatible providers expose chat under
+    # <baseUrl>/v1/chat/completions, so do NOT include the trailing /v1 here
+    # (Spring AI appends it). Override with OPENROUTER_BASE_URL to point at any
+    # OpenAI-compatible gateway (e.g. https://api.groq.com/openai).
+    base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api}
+    temperature: ${NOVA_AI_TEMPERATURE:0.2}
+    max-tokens: ${NOVA_AI_MAX_TOKENS:1024}
+    fallback-message: ${NOVA_AI_FALLBACK:The AI assistant is temporarily unavailable. Your financial data is safe — please try again shortly.}
 
 info:
   app:

@@ -21,6 +21,10 @@ public enum ErrorCode {
     RECEIPT_OCR_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "The receipt scanner is not available right now."),
     RECEIPT_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "We could not process this receipt."),
     RECEIPT_STORAGE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "We could not store this receipt."),
+    AI_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "The AI assistant is temporarily unavailable. Please try again in a moment."),
+    AI_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "The AI assistant took too long to respond. Please try again."),
+    AI_RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "The AI assistant is busy right now. Please try again shortly."),
+    AI_INVALID_RESPONSE(HttpStatus.BAD_GATEWAY, "The AI assistant returned an unusable response. Please try rephrasing."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred.");
 
     private final HttpStatus status;

@@ -3,6 +3,61 @@
 All notable changes to Nova are documented in this file. The format is based on
 keeping a clear record of Added, Improved, and Fixed work per release.
 
+## [0.9.0] — Phase 7: AI Financial Copilot
+
+Adds a natural-language copilot that answers questions about the user's **own** financial
+data. The AI is a thin explainer over Nova's existing domains — it consumes
+`AnalyticsService`, `GoalService`, `ReceiptService`, and the budget/transaction engines and
+**never** owns, recalculates, or queries financial data itself. Answers are grounded
+entirely in application data; when data is missing the assistant says so rather than
+inventing figures. The provider is behind a swappable interface, so the model can be replaced
+later without touching the pipeline. The backend boots and all other features keep working
+even when no model key is configured.
+
+### Added
+- **AI domain (backend).** A dedicated `com.nova.ai` package: `AiCopilotController`,
+  `CopilotService` (pipeline orchestrator), `IntentResolver` (deterministic, keyword-scored
+  intent detection for Spending / Budget / Goals / Receipts / Cash Flow / Financial Health /
+  Comparison / General Summary), `FinancialContextBuilder` (gathers only what the intent
+  needs from existing services), `PromptBuilder` (fixed persona + structured data document +
+  hard grounding rules), `ConversationService` (lightweight, per-user, in-memory, bounded
+  history for follow-ups), `AiResponseMapper` (render-ready data card), and `PeriodResolver`
+  (this/last month / YTD windows in UTC, matching the rest of Nova).
+- **Provider abstraction.** `AiChatGateway` interface with a shipped `OpenRouterChatGateway`
+  built on Spring AI's provider-agnostic `ChatClient` over the OpenAI-compatible chat-completions
+  API (`deepseek/deepseek-chat-v3-0324:free` by default). `OpenRouterConfig` builds the model
+  **only when a real key is present**; the starter's `OpenAiChatAutoConfiguration` is excluded so
+  a missing key never crashes the context.
+- **AI API (`/api/copilot`, all protected, `ApiResponse` envelope):** `POST /chat`
+  (ask a question, optionally continuing a thread via `conversationId`), `GET /conversations`
+  (per-user thread summaries), `GET /suggestions` (starter questions), and
+  `DELETE /conversations` (reset one thread or all).
+- **Configuration.** `AiProperties` under `nova.ai.*` (model, temperature, max tokens,
+  fallback message). The OpenRouter key is read from `nova.ai.api-key` / `OPENROUTER_API_KEY` —
+  never from `spring.ai.openai.*`.
+- **Error handling.** Dedicated `ErrorCode`s (`AI_UNAVAILABLE`, `AI_TIMEOUT`,
+  `AI_RATE_LIMITED`, `AI_INVALID_RESPONSE`); every provider failure mode is translated to a
+  friendly message and the copilot degrades a failed turn to a fallback answer so the thread
+  survives. Four new decision-log entries (D-7-1 … D-7-9) record the architecture.
+- **Frontend Copilot feature.** A `/copilot` page, a floating assistant button on every
+  route, a sliding `CopilotPanel` drawer that preserves the thread across navigation, a
+  shared `ConversationUI` (typing animation, copy, markdown rendering, data card, follow-up
+  suggestion chips), pinned `MessageBubble`, `useCopilot` hooks, and a `copilotStore`
+  (Zustand). A small **"Ask Nova AI"** dashboard widget opens the copilot with a starter
+  question; the dashboard layout is extended, not redesigned.
+
+### Improved
+- Intent resolution, context building, prompt construction, and response mapping are each
+  isolated; the model is the only consumer of financial data and is forbidden from using
+  outside knowledge or leaking the system prompt.
+- All endpoints operate strictly in the authenticated user's scope, so one user can never
+  see another's figures by construction.
+
+### Fixed
+- Prevents a startup crash when no provider key is present (the starter's auto-configured
+  client required a key at construction time); `OpenRouterConfig` now gates construction on
+  `isConfigured()`.
+
 ## [0.8.0] — Phase 6: Smart Receipt Capture
 
 Adds an intelligent document-processing pipeline that turns a photo or upload of a receipt

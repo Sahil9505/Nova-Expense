@@ -9,6 +9,54 @@ None known.
 
 ## Fixed Bugs
 
+### B-7-1 — Missing Gemini key must not crash application startup
+- **Severity:** High
+- **Symptom:** With no `GEMINI_API_KEY` configured, the Spring context failed to start, so
+  the entire backend (auth, finance, everything) was down — not just the copilot.
+- **Root cause:** The Spring AI starter's `GoogleGenAiChatAutoConfiguration` builds a
+  `googleGenAiClient` bean that requires a usable API key **at construction time**. A
+  placeholder key still fails, so relying on the autoconfig could not avoid the crash.
+- **Fix:** `NovaApplication` **excludes** `OpenAiChatAutoConfiguration`; `OpenRouterConfig`
+  builds the `OpenAiChatModel` itself and only when `AiProperties.isConfigured()` is
+  true. When unconfigured it exposes a non-LLM `AiChatGateway` whose `isAvailable()` is
+  `false`, so the app boots and the copilot degrades to a friendly "not configured" message.
+- **Resolved in:** v0.9.0
+
+### B-7-2 — Copilot must never fabricate financial figures
+- **Severity:** High (design safeguard)
+- **Symptom:** N/A — caught by design, not observed. A general-purpose model will happily
+  invent plausible numbers if asked a question it lacks data for.
+- **Root cause:** Without strict grounding, an LLM answers from training data rather than the
+  user's real figures — unacceptable for a finance app.
+- **Fix:** The AI never queries data itself. `FinancialContextBuilder` supplies only figures
+  produced by existing domain services, and `PromptBuilder`'s system instruction forbids
+  outside knowledge and requires the model to say it lacks information rather than invent. A
+  render-ready `DataReference` shows the exact figures the answer was grounded on.
+- **Resolved in:** v0.9.0
+
+### B-7-3 — Copilot must never expose another user's data or the system prompt
+- **Severity:** High (design safeguard)
+- **Symptom:** N/A — caught by design.
+- **Root cause:** Any cross-user leakage or prompt disclosure would be a serious breach.
+- **Fix:** Every endpoint operates strictly on the authenticated `principal.getUserId()`,
+  threaded into the existing services that already enforce ownership — cross-user access is
+  impossible by construction. The system instruction forbids revealing itself, and
+  `AiCopilotException` maps failures to friendly errors that never leak prompts or stack
+  traces. Conversation history is keyed by user id and bounded in memory.
+- **Resolved in:** v0.9.0
+
+### B-7-4 — Malformed `conversationId` threw NPE instead of starting a new thread
+- **Severity:** Medium
+- **Symptom:** A non-UUID `conversationId` on `POST /api/copilot/chat` (or `DELETE
+  /conversations`) surfaced as a 500 rather than a graceful new/empty conversation.
+- **Root cause:** `ConversationService.parse()` returned `null` for an unparseable id, and
+  `ConcurrentHashMap.get(null)` / `remove(null)` throw `NullPointerException`. `parse(null)`
+  itself also NPE'd. Caught by the new `ConversationServiceTest`.
+- **Fix:** `parse()` is null-safe; `getOrCreate` starts a fresh thread when the id is
+  missing or malformed; and `reset` only clears **all** threads when the id is genuinely
+  omitted (null/blank) — a malformed id is now a no-op, never a mass delete.
+- **Resolved in:** v0.9.0
+
 ### B-6-1 — Receipt upload must never persist a row with a null `storage_key`
 - **Severity:** High (design safeguard)
 - **Symptom:** N/A — caught by code review, not observed in production.
